@@ -1,64 +1,56 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoPlanta Pro v6 - Padrão ABNT & Assinatura</title>
+    <title>AutoPlanta Pro v7 - Selo Dinâmico</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
         
         #sidebar { width: 320px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
-        #inventory { width: 280px; background: #181818; padding: 15px; border-left: 1px solid #333; }
+        #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; }
         
-        .section { background: #252525; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
+        .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
+        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
         
-        label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; }
-        select, button, input { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
-        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
+        label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-top: 5px; }
+        input, select, button { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
+        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
         
-        #canvas-container { flex: 1; background: #444; display: flex; align-items: center; justify-content: center; overflow: auto; }
+        #canvas-container { flex: 1; background: #333; display: flex; align-items: center; justify-content: center; overflow: auto; }
         canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
-        
-        .abnt-table { font-size: 10px; color: #ccc; width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .abnt-table td { border: 1px solid #444; padding: 4px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>AutoPlanta <span style="color:var(--blue)">v6</span></h2>
+    <h2>AutoPlanta <span style="color:var(--blue)">v7</span></h2>
     
     <div class="section">
-        <label>Componente</label>
-        <select id="tipo_item" onchange="aplicarPadrao()">
-            <optgroup label="Estrutura">
-                <option value="quarto">Quarto</option>
-                <option value="sala">Sala de Estar</option>
-                <option value="cozinha">Cozinha</option>
-                <option value="garagem_box">Garagem (Área)</option>
-            </optgroup>
-            <optgroup label="Aberturas">
-                <option value="porta_social">P1 - Porta Social</option>
-                <option value="porta_dupla">P2 - Porta Dupla</option>
-                <option value="portao_garagem">PG - Portão Garagem</option>
-                <option value="janela_2f">J1 - Janela</option>
-            </optgroup>
-        </select>
-        <button class="btn-add" onclick="mandarProEstoque()">+ ESTOQUE</button>
+        <label>Dados do Projeto (Selo)</label>
+        <input type="text" id="input_proprietario" placeholder="Nome do Proprietário" oninput="desenhar()">
+        <input type="text" id="input_data" placeholder="Data (ex: 12/05/2026)" oninput="desenhar()">
     </div>
 
     <div class="section">
-        <label>Siglas ABNT (Referência)</label>
-        <table class="abnt-table">
-            <tr><td><b>P</b></td><td>Porta</td><td><b>J</b></td><td>Janela</td></tr>
-            <tr><td><b>H</b></td><td>Pé-direito</td><td><b>i</b></td><td>Inclinação</td></tr>
-            <tr><td><b>N</b></td><td>Nível</td><td><b>PG</b></td><td>P. Garagem</td></tr>
-        </table>
+        <label>Adicionar ao Estoque</label>
+        <select id="tipo_item">
+            <optgroup label="Estruturas">
+                <option value="quarto">Quarto</option>
+                <option value="sala">Sala</option>
+                <option value="garagem_area">Área de Garagem</option>
+            </optgroup>
+            <optgroup label="Aberturas">
+                <option value="porta_comum">P1 - Porta Giro (0.80m)</option>
+                <option value="porta_dupla">P2 - Porta Dupla</option>
+                <option value="portao_garagem">PG - Portão Garagem</option>
+                <option value="janela_2f">J1 - Janela Dupla</option>
+            </optgroup>
+        </select>
+        <button class="btn-add" onclick="mandarProEstoque()">+ CRIAR COMPONENTE</button>
     </div>
 
-    <button onclick="window.print()" style="background:#007bff">🖨️ PREPARAR IMPRESSÃO</button>
+    <button onclick="window.print()" style="background:#555">🖨️ IMPRIMIR / PDF</button>
 </div>
 
 <div id="canvas-container">
@@ -66,7 +58,7 @@
 </div>
 
 <div id="inventory">
-    <h3>📦 Estoque</h3>
+    <h3>📦 Itens Prontos</h3>
     <div id="lista-estoque"></div>
 </div>
 
@@ -74,18 +66,21 @@
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const escala = 30;
+    const folhaW = 794; // A4 px
+    const folhaH = 1123;
     let estoque = [];
     let noTerreno = [];
     let selecionado = null;
     let offset = { x: 0, y: 0 };
 
-    // Dimensões da folha A4 em pixels (aproximado para 72dpi)
-    const folhaW = 794; 
-    const folhaH = 1123;
-
     function mandarProEstoque() {
         const tipo = document.getElementById('tipo_item').value;
-        estoque.push({ id: Date.now(), tipo: tipo, w: 3.0, h: 4.0 }); // Simplificado para o exemplo
+        // Medidas padrão por tipo
+        let w = 3, h = 4;
+        if(tipo.includes('porta_comum')) { w = 0.8; h = 0.15; }
+        if(tipo === 'portao_garagem') { w = 3.5; h = 0.2; }
+        
+        estoque.push({ id: Date.now(), tipo, w, h });
         atualizarEstoqueUI();
     }
 
@@ -95,53 +90,52 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong>`;
-            div.onclick = () => { noTerreno.push({...item, x:100, y:100, rot:0}); desenhar(); };
+            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong> (${item.w}x${item.h}m)`;
+            div.onclick = () => { noTerreno.push({...item, x:150, y:150, rot:0}); desenhar(); };
             container.appendChild(div);
         });
     }
 
     function desenharSelo() {
-        const margem = 40;
-        const seloW = 250;
-        const seloH = 120;
-        const posX = folhaW - seloW - margem;
-        const posY = folhaH - seloH - margem;
+        const prop = document.getElementById('input_proprietario').value || "NOME DO CLIENTE";
+        const data = document.getElementById('input_data').value || " / / ";
+        
+        const m = 40; const sW = 260; const sH = 130;
+        const pX = folhaW - sW - m; const pY = folhaH - sH - m;
 
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(posX, posY, seloW, seloH);
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+        ctx.strokeRect(pX, pY, sW, sH);
 
-        // Divisões do Selo
+        // Divisões
         ctx.beginPath();
-        ctx.moveTo(posX, posY + 30); ctx.lineTo(posX + seloW, posY + 30);
-        ctx.moveTo(posX, posY + 60); ctx.lineTo(posX + seloW, posY + 60);
+        ctx.moveTo(pX, pY+40); ctx.lineTo(pX+sW, pY+40);
+        ctx.moveTo(pX, pY+80); ctx.lineTo(pX+sW, pY+80);
         ctx.stroke();
 
-        // Textos do Selo
         ctx.fillStyle = "#000";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText("PROPRIETÁRIO: MÁRCIO", posX + 10, posY + 20);
-        
-        ctx.font = "10px Arial";
-        ctx.fillText("DATA: 12/05/2026", posX + 10, posY + 50);
-        ctx.fillText("ESCALA: 1:50", posX + 150, posY + 50);
-        
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("PROPRIETÁRIO:", pX+10, pY+15);
+        ctx.font = "13px Courier New";
+        ctx.fillText(prop.toUpperCase(), pX+10, pY+32);
+
+        ctx.font = "bold 11px Arial";
+        ctx.fillText("DATA: " + data, pX+10, pY+55);
+        ctx.fillText("ESCALA: 1:50", pX+160, pY+55);
+        ctx.fillText("RESPONSÁVEL: MÁRCIO", pX+10, pY+75);
+
         ctx.font = "bold 10px Arial";
-        ctx.fillText("ASSINATURA DO RESPONSÁVEL:", posX + 10, posY + 80);
+        ctx.fillText("ASSINATURA:", pX+10, pY+100);
         ctx.setLineDash([2, 2]);
-        ctx.beginPath(); ctx.moveTo(posX + 10, posY + 105); ctx.lineTo(posX + seloW - 10, posY + 105); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(pX+10, pY+120); ctx.lineTo(pX+sW-10, pY+120); ctx.stroke();
         ctx.setLineDash([]);
     }
 
     function desenhar() {
-        canvas.width = folhaW;
-        canvas.height = folhaH;
+        canvas.width = folhaW; canvas.height = folhaH;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Moldura da Folha (Margem ABNT)
-        ctx.strokeStyle = "#ccc";
-        ctx.strokeRect(20, 20, folhaW-40, folhaH-40);
+        // Margem de Segurança
+        ctx.strokeStyle = "#eee"; ctx.strokeRect(20, 20, folhaW-40, folhaH-40);
 
         noTerreno.forEach(obj => {
             const w = obj.w * escala; const h = obj.h * escala;
@@ -149,34 +143,41 @@
             ctx.translate(obj.x + w/2, obj.y + h/2);
             ctx.rotate(obj.rot * Math.PI / 180);
 
-            ctx.fillStyle = "#fff";
-            ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-            ctx.strokeRect(-w/2, -h/2, w, h);
+            if(obj.tipo === 'porta_comum') {
+                // Desenho da porta de abrir (arco)
+                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2;
+                ctx.strokeRect(-w/2, -h/2, w, h); // A folha da porta
+                ctx.beginPath();
+                ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); // O arco de abertura
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
+                ctx.strokeStyle = "#000"; ctx.lineWidth = obj.tipo.includes('porta') || obj.tipo.includes('janela') ? 2 : 4;
+                ctx.strokeRect(-w/2, -h/2, w, h);
+            }
             
             ctx.fillStyle = "#000"; ctx.font = "9px Arial";
-            ctx.fillText(obj.tipo.toUpperCase(), -w/2 + 5, -h/2 + 15);
+            ctx.fillText(obj.tipo.toUpperCase(), -w/2 + 3, -h/2 + 12);
             
-            // Ícone de Rotação (Apenas visual no app)
-            ctx.fillStyle = "rgba(0, 210, 255, 0.5)";
-            ctx.beginPath(); ctx.arc(0, -h/2 - 10, 5, 0, Math.PI*2); ctx.fill();
-            
+            // Botão Girar
+            ctx.fillStyle = "rgba(0, 210, 255, 0.4)";
+            ctx.beginPath(); ctx.arc(0, -h/2 - 15, 6, 0, Math.PI*2); ctx.fill();
             ctx.restore();
         });
 
         desenharSelo();
     }
 
-    // Eventos de Mouse (Arraste e Giro)
     canvas.onmousedown = (e) => {
         const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) * (folhaW / rect.width);
-        const my = (e.clientY - rect.top) * (folhaH / rect.height);
+        const ratio = folhaW / rect.width;
+        const mx = (e.clientX - rect.left) * ratio;
+        const my = (e.clientY - rect.top) * ratio;
         
         for (let i = noTerreno.length - 1; i >= 0; i--) {
             let o = noTerreno[i];
             const w = o.w * escala; const h = o.h * escala;
-            const dist = Math.sqrt((mx - (o.x + w/2))**2 + (my - (o.y - 10))**2);
+            const dist = Math.sqrt((mx - (o.x + w/2))**2 + (my - (o.y - 15))**2);
             if(dist < 20) { o.rot = (o.rot + 90) % 360; desenhar(); return; }
             if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
                 selecionado = o; offset.x = mx - o.x; offset.y = my - o.y; break;
@@ -186,9 +187,9 @@
     window.onmousemove = (e) => {
         if (selecionado) {
             const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left) * (folhaW / rect.width);
-            const my = (e.clientY - rect.top) * (folhaH / rect.height);
-            selecionado.x = mx - offset.x; selecionado.y = my - offset.y;
+            const ratio = folhaW / rect.width;
+            selecionado.x = (e.clientX - rect.left) * ratio - offset.x;
+            selecionado.y = (e.clientY - rect.top) * ratio - offset.y;
             desenhar();
         }
     };
