@@ -1,85 +1,144 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Gerador de Projetos de Edificações 2D - ABNT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoPlanta 2D - ABNT</title>
     <style>
-        body { font-family: Arial; background: #222; color: #fff; display: flex; }
-        #sidebar { width: 300px; padding: 20px; background: #333; height: 100vh; overflow-y: auto; }
-        #preview { flex: 1; display: flex; justify-content: center; align-items: center; background: #eee; }
-        canvas { background: white; border: 2px solid #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .campo { margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; }
-        input[type="number"] { width: 60px; }
-        button { width: 100%; padding: 10px; background: #00d2ff; border: none; font-weight: bold; cursor: pointer; }
+        :root { --blue: #00d2ff; --dark: #1a1a1a; --gray: #333; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; }
+        
+        /* Painel Lateral */
+        #sidebar { width: 350px; background: #222; padding: 20px; overflow-y: auto; border-right: 2px solid var(--gray); }
+        h2 { color: var(--blue); border-bottom: 1px solid var(--gray); padding-bottom: 10px; }
+        
+        .section { background: #2b2b2b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--blue); }
+        label { display: block; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; background: #444; color: white; }
+        
+        .btn-add { background: #28a745; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 5px; }
+        .btn-generate { background: var(--blue); color: #000; border: none; padding: 15px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        
+        /* Área do Desenho */
+        #canvas-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #444; position: relative; }
+        canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); cursor: crosshair; }
+        .tabs { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; }
+        .tab-btn { padding: 10px 20px; background: var(--gray); border: none; color: white; cursor: pointer; }
+        .tab-btn.active { background: var(--blue); color: black; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Configurar Projeto</h2>
+    <h2>Configurações</h2>
     
-    <div class="campo">
-        <label>Tipo de Imóvel:</label>
-        <input type="radio" name="tipo" value="casa" checked> Casa
-        <input type="radio" name="tipo" value="apto"> Apto
+    <div class="tabs-ui">
+        <button class="tab-btn active" onclick="setAndar('terreo')">Térreo</button>
+        <button class="tab-btn" onclick="setAndar('superior')">2º Andar</button>
     </div>
 
-    <div class="campo">
-        <label>Terreno (Metros):</label>
-        Larg: <input type="number" id="terr_larg" value="10"> 
-        Comp: <input type="number" id="terr_comp" value="20">
+    <div class="section">
+        <label>Medidas do Terreno (m)</label>
+        <input type="number" id="terr_l" placeholder="Largura" value="10">
+        <input type="number" id="terr_c" placeholder="Comprimento" value="20">
     </div>
 
-    <div class="campo">
-        <label>Quarto 1:</label>
-        <input type="radio" name="q1_tipo" value="casal" checked> Casal
-        <input type="radio" name="q1_tipo" value="solteiro"> Solteiro
-        <br>
-        <input type="checkbox" id="q1_suite"> Com Suíte
-        <input type="checkbox" id="q1_closet"> Com Closet
-    </div>
+    <div id="comodos-area">
+        </div>
 
-    <div class="campo">
-        <label>Outros Cômodos:</label>
-        <input type="checkbox" id="tem_piscina"> Piscina
-        <input type="checkbox" id="tem_garagem"> Garagem
-        <input type="checkbox" id="tem_kitnet"> Kitnet
-    </div>
-
-    <button onclick="desenharProjeto()">Gerar Planta 2D</button>
+    <button class="btn-add" onclick="novoComodo()">+ Adicionar Cômodo</button>
+    <button class="btn-generate" onclick="renderizar()">GERAR PLANTA TÉCNICA</button>
 </div>
 
-<div id="preview">
-    <canvas id="plantaCanvas" width="800" height="600"></canvas>
+<div id="canvas-container">
+    <div class="tabs">
+        <span id="label-andar">Mostrando: Térreo</span>
+    </div>
+    <canvas id="mainCanvas" width="700" height="900"></canvas>
 </div>
 
 <script>
-    function desenharProjeto() {
-        const canvas = document.getElementById('plantaCanvas');
+    // LÓGICA JAVASCRIPT
+    let andarAtual = 'terreo';
+    let projeto = {
+        terreo: [],
+        superior: []
+    };
+
+    function setAndar(a) {
+        andarAtual = a;
+        document.getElementById('label-andar').innerText = "Mostrando: " + (a === 'terreo' ? 'Térreo' : '2º Andar');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(a === 'terreo' ? 'térreo' : '2º')));
+        renderizar();
+    }
+
+    function novoComodo() {
+        const id = Date.now();
+        const div = document.createElement('div');
+        div.className = 'section';
+        div.id = `comodo-${id}`;
+        div.innerHTML = `
+            <select onchange="updateComodo(${id}, 'tipo', this.value)">
+                <option value="quarto">Quarto</option>
+                <option value="sala">Sala</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="banheiro">Banheiro</option>
+                <option value="escada">Escada</option>
+            </select>
+            <div style="display:flex; gap:5px">
+                <input type="number" placeholder="L" onchange="updateComodo(${id}, 'w', this.value)">
+                <input type="number" placeholder="C" onchange="updateComodo(${id}, 'h', this.value)">
+            </div>
+            <label><input type="checkbox" onchange="updateComodo(${id}, 'suite', this.checked)"> Suíte/Closet</label>
+            <button onclick="removerComodo(${id})" style="background:red; color:white; border:none; width:100%">Remover</button>
+        `;
+        document.getElementById('comodos-area').appendChild(div);
+        projeto[andarAtual].push({ id, tipo: 'quarto', w: 3, h: 3, suite: false });
+    }
+
+    function updateComodo(id, campo, valor) {
+        let c = projeto[andarAtual].find(i => i.id === id);
+        if(c) c[campo] = valor;
+    }
+
+    function renderizar() {
+        const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // Limpar canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        const larg = document.getElementById('terr_larg').value * 20; // Escala simples
-        const comp = document.getElementById('terr_comp').value * 20;
+        const escala = 30; // 1 metro = 30 pixels
+        
+        // Desenha Terreno
+        const tl = document.getElementById('terr_l').value * escala;
+        const tc = document.getElementById('terr_c').value * escala;
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(50, 50, tl, tc);
 
-        // Desenhar Terreno (Norma ABNT: Linha grossa contínua)
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(50, 50, larg, comp);
+        // Desenha Cômodos do Andar Atual
+        let xOff = 55;
+        let yOff = 55;
 
-        // Exemplo: Se tiver piscina, desenha um retângulo azul
-        if(document.getElementById('tem_piscina').checked) {
-            ctx.fillStyle = "rgba(0, 210, 255, 0.3)";
-            ctx.fillRect(60, 60, 100, 50);
-            ctx.strokeRect(60, 60, 100, 50);
-            ctx.fillStyle = "black";
-            ctx.fillText("PISCINA", 80, 90);
-        }
-
-        alert("Planta base gerada! Agora seria necessário programar a lógica de encaixe dos cômodos.");
+        projeto[andarAtual].forEach(c => {
+            const w = c.w * escala;
+            const h = c.h * escala;
+            
+            ctx.fillStyle = "#fff";
+            ctx.strokeStyle = "#000";
+            ctx.lineWidth = 4; // Paredes conforme ABNT (linha grossa)
+            ctx.strokeRect(xOff, yOff, w, h);
+            
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 12px Arial";
+            ctx.fillText(c.tipo.toUpperCase(), xOff + 5, yOff + 20);
+            ctx.font = "10px Arial";
+            ctx.fillText(`${c.w}x${c.h}m`, xOff + 5, yOff + 35);
+            
+            // Lógica simples de empilhamento lateral
+            xOff += w;
+            if(xOff > tl) { xOff = 55; yOff += h; }
+        });
     }
 </script>
 
