@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -40,25 +39,24 @@
     <div class="section">
         <label><b>ADICIONAR</b></label>
         <select id="sel_tipo">
-            <optgroup label="Áreas de Serviço">
-                <option value="garagem">Garagem</option>
-                <option value="lavanderia">Lavanderia</option>
-            </optgroup>
-            <optgroup label="Cômodos">
-                <option value="quarto">Quarto</option>
-                <option value="sala">Sala</option>
-                <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro</option>
-            </optgroup>
             <optgroup label="Portas">
-                <option value="p_garagem">Portão Garagem (3.50m)</option>
+                <option value="p_dupla">Porta Dupla (1.60m)</option>
                 <option value="p_social">Porta Social (1.20m)</option>
                 <option value="p_comum">Porta Comum (0.80m)</option>
+                <option value="p_garagem">Portão Garagem (3.50m)</option>
             </optgroup>
             <optgroup label="Janelas">
                 <option value="j_tripla">Janela Tripla (2.00m)</option>
                 <option value="j_dupla">Janela Dupla (1.50m)</option>
                 <option value="j_banheiro">Basculante (0.60m)</option>
+            </optgroup>
+            <optgroup label="Cômodos">
+                <option value="sala">Sala</option>
+                <option value="quarto">Quarto</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="banheiro">Banheiro</option>
+                <option value="garagem">Garagem</option>
+                <option value="lavanderia">Lavanderia</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
@@ -87,14 +85,15 @@
         const t = document.getElementById('sel_tipo').value;
         let w = 3.0, h = 4.0;
         
-        if(t === 'garagem') { w = 3.5; h = 5.5; }
-        else if(t === 'lavanderia') { w = 2.0; h = 3.0; }
-        else if(t === 'p_garagem') { w = 3.5; h = 0.15; }
+        if(t === 'p_dupla') { w = 1.6; h = 0.15; }
         else if(t === 'p_social') { w = 1.2; h = 0.15; }
         else if(t === 'p_comum') { w = 0.8; h = 0.15; }
+        else if(t === 'p_garagem') { w = 3.5; h = 0.15; }
         else if(t === 'j_tripla') { w = 2.0; h = 0.15; }
         else if(t === 'j_dupla') { w = 1.5; h = 0.15; }
         else if(t === 'j_banheiro') { w = 0.6; h = 0.15; }
+        else if(t === 'garagem') { w = 3.5; h = 5.5; }
+        else if(t === 'lavanderia') { w = 2.0; h = 3.0; }
         else if(t === 'banheiro') { w = 1.5; h = 2.5; }
 
         estoque.push({ id: Date.now(), tipo: t, w, h });
@@ -122,7 +121,7 @@
         ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial"; ctx.fillText("QUADRO DE ÁREAS", xQ + 85, 57);
         
         let areaC = 0;
-        noTerreno.forEach(o => { if(!o.tipo.startsWith('p') && !o.tipo.startsWith('j')) areaC += (o.w * o.h); });
+        noTerreno.forEach(o => { if(!['p','j'].includes(o.tipo[0])) areaC += (o.w * o.h); });
         const areaT = Number(document.getElementById('terr_w').value) * Number(document.getElementById('terr_h').value);
 
         ctx.font = "10px Arial";
@@ -157,7 +156,17 @@
                 ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
                 ctx.strokeStyle = obj.tipo.startsWith('j') ? "#00d2ff" : "#8b4513";
                 ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
-                if(obj.tipo.startsWith('j')) { ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke(); }
+                
+                if(obj.tipo.startsWith('j')) { 
+                    ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke(); 
+                } else if(obj.tipo === 'p_dupla' || obj.tipo === 'p_garagem') {
+                    ctx.beginPath();
+                    ctx.arc(-w/2, h/2, w/2, 0, -Math.PI/2, true);
+                    ctx.arc(w/2, h/2, w/2, Math.PI, Math.PI*1.5);
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+                }
             } else {
                 ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
             }
