@@ -2,47 +2,18 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>AutoPlanta Pro v12 - Janelas de Banheiro</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        
-        /* Barra Lateral Esquerda */
-        #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; z-index: 10; flex-shrink: 0; }
-        
-        /* Área Central do Desenho com Espaçamento */
-        #canvas-container { 
-            flex: 1; 
-            background: #2a2a2a; 
-            display: flex; 
-            align-items: flex-start; 
-            justify-content: center; 
-            overflow: auto; 
-            padding: 50px;
-            position: relative;
-        }
-
-        /* Barra Lateral Direita (Estoque) */
+        #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
+        #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 50px; }
         #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
-
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; transition: 0.2s; }
-        .item-pronto:hover { border-color: var(--blue); background: #3d3d3d; }
-
-        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; font-size: 14px; }
+        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        .btn-add:hover { filter: brightness(1.1); }
-
-        canvas { 
-            background: white; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.6); 
-            outline: none; 
-            cursor: crosshair;
-            margin-bottom: 50px; /* Margem extra no final para não colar no fundo */
-        }
-        
-        .instrucoes { font-size: 11px; color: #888; margin-top: 10px; line-height: 1.4; }
-        h2 { margin-top: 0; font-size: 20px; }
+        canvas { background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.6); outline: none; }
     </style>
 </head>
 <body>
@@ -55,7 +26,7 @@
         <input type="text" id="proj_data" placeholder="Data (00/00/0000)" oninput="desenhar()">
     </div>
     <div class="section">
-        <label><b>SELECIONAR ACESSO / ESTRUTURA</b></label>
+        <label><b>SELECIONAR ESTRUTURA</b></label>
         <select id="sel_tipo">
             <optgroup label="Cômodos">
                 <option value="quarto">Quarto</option>
@@ -63,27 +34,25 @@
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro</option>
                 <option value="lavanderia">Lavanderia</option>
-                <option value="garagem">Área Garagem</option>
             </optgroup>
             <optgroup label="Acessos">
                 <option value="p_comum">Porta Comum (0.80m)</option>
                 <option value="p_social">Porta Social (1.60m)</option>
-                <option value="p_garagem">Portão de Garagem (3.50m)</option>
             </optgroup>
-            <optgroup label="Janelas">
+            <optgroup label="Janelas Padrão">
                 <option value="j_dupla">Janela Dupla (1.50m)</option>
                 <option value="j_tripla">Janela Tripla (2.00m)</option>
+            </optgroup>
+            <optgroup label="Janelas de Banheiro">
+                <option value="j_banheiro_simples">Janela Basculante (0.60m)</option>
+                <option value="j_banheiro_dupla">Janela Banheiro Dupla (1.00m)</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
     </div>
-    <div class="instrucoes">
-        💡 <b>DICA:</b> Selecione um bloco e use <b>SHIFT + Setas</b> para aumentar ou diminuir o tamanho livremente!
-    </div>
 </div>
 
 <div id="canvas-container">
-    <!-- Respiro em todos os lados -->
     <canvas id="mainCanvas" tabindex="1"></canvas>
 </div>
 
@@ -95,22 +64,20 @@
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const escala = 30; // 30px = 1 metro
-    const folhaW = 794; const folhaH = 1123; // Tamanho A4 (proporcional)
-    
+    const escala = 30; 
+    const folhaW = 794; const folhaH = 1123;
     let estoque = [], noTerreno = [], selecionado = null, offset = { x: 0, y: 0 };
 
     function adicionarAoEstoque() {
         const t = document.getElementById('sel_tipo').value;
         let w = 3.0, h = 4.0;
         
-        // Definições iniciais de tamanho
-        if(t === 'p_comum') { w = 0.8; h = 0.15; }
-        else if(t === 'p_social') { w = 1.6; h = 0.15; }
-        else if(t === 'p_garagem') { w = 3.5; h = 0.25; }
+        // Novos tamanhos específicos para janelas de banheiro
+        if(t === 'j_banheiro_simples') { w = 0.6; h = 0.15; }
+        else if(t === 'j_banheiro_dupla') { w = 1.0; h = 0.15; }
+        else if(t === 'p_comum') { w = 0.8; h = 0.15; }
         else if(t === 'banheiro') { w = 1.5; h = 2.5; }
-        else if(t === 'lavanderia') { w = 2.0; h = 2.0; }
-        else if(t.includes('j_')) { w = 1.5; h = 0.15; }
+        else if(t === 'j_dupla') { w = 1.5; h = 0.15; }
 
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
@@ -122,41 +89,16 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
-            div.onclick = () => { 
-                noTerreno.push({...item, x:100, y:100, rot:0, id: Date.now()}); 
-                desenhar(); 
-            };
+            div.innerHTML = `<strong>${item.tipo.replace(/_/g,' ').toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
+            div.onclick = () => { noTerreno.push({...item, x:100, y:100, rot:0, id: Date.now()}); desenhar(); };
             container.appendChild(div);
         });
-    }
-
-    function desenharSelo() {
-        const p = document.getElementById('prop_nome').value || "PROPRIETÁRIO";
-        const d = document.getElementById('proj_data').value || "--/--/----";
-        const pX = folhaW - 300, pY = folhaH - 160;
-
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-        ctx.strokeRect(pX, pY, 260, 120);
-        ctx.beginPath(); 
-        ctx.moveTo(pX, pY+40); ctx.lineTo(pX+260, pY+40); 
-        ctx.moveTo(pX, pY+80); ctx.lineTo(pX+260, pY+80); 
-        ctx.stroke();
-
-        ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial";
-        ctx.fillText("PROPRIETÁRIO: " + p.toUpperCase(), pX+10, pY+25);
-        ctx.fillText("DATA: " + d, pX+10, pY+65);
-        ctx.fillText("RESPONSÁVEL: MÁRCIO", pX+10, pY+105);
     }
 
     function desenhar() {
         canvas.width = folhaW; canvas.height = folhaH;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Borda da folha
-        ctx.strokeStyle = "#ccc"; ctx.lineWidth = 1;
-        ctx.strokeRect(5, 5, folhaW-10, folhaH-10);
-
         noTerreno.forEach(obj => {
             const w = obj.w * escala; const h = obj.h * escala;
             ctx.save();
@@ -165,34 +107,43 @@
 
             ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.15)" : "#fff";
             
-            if(obj.tipo === 'p_comum' || obj.tipo === 'p_social') {
-                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2;
+            // Desenho diferenciado para janelas de banheiro (tracejado ou cor diferente se quiser)
+            if(obj.tipo.includes('banheiro')) {
+                ctx.strokeStyle = "#ff9800"; // Laranja para destacar janelas de banheiro
+                ctx.lineWidth = 2;
                 ctx.strokeRect(-w/2, -h/2, w, h);
-                ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke();
             } else if(obj.tipo.includes('j_')) {
                 ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2;
                 ctx.strokeRect(-w/2, -h/2, w, h);
                 let f = obj.tipo.includes('tripla') ? 3 : 2;
-                for(let i=1; i<f; i++) {
-                    ctx.beginPath(); ctx.moveTo(-w/2 + (w/f)*i, -h/2); ctx.lineTo(-w/2 + (w/f)*i, h/2); ctx.stroke();
-                }
+                for(let i=1; i<f; i++) { ctx.beginPath(); ctx.moveTo(-w/2 + (w/f)*i, -h/2); ctx.lineTo(-w/2 + (w/f)*i, h/2); ctx.stroke(); }
+            } else if(obj.tipo.includes('p_')) {
+                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2;
+                ctx.strokeRect(-w/2, -h/2, w, h);
+                ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
             } else {
                 ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; ctx.lineWidth = obj === selecionado ? 3 : 1.5;
+                ctx.strokeStyle = "#000"; ctx.lineWidth = obj === selecionado ? 3 : 1;
                 ctx.strokeRect(-w/2, -h/2, w, h);
             }
             
             ctx.fillStyle = "#000"; ctx.font = "9px Arial";
-            ctx.fillText(`${obj.tipo.toUpperCase()} (${obj.w.toFixed(1)}m)`, -w/2, -h/2 - 5);
+            ctx.fillText(`${obj.tipo.replace(/_/g,' ').toUpperCase()} (${obj.w.toFixed(2)}m)`, -w/2, -h/2 - 5);
             ctx.restore();
         });
-        desenharSelo();
+        
+        // Selo
+        const p = document.getElementById('prop_nome').value || "PROPRIETÁRIO";
+        ctx.fillStyle = "#000"; ctx.font = "bold 12px Arial";
+        ctx.fillText("RESPONSÁVEL TÉCNICO: MÁRCIO", folhaW-280, folhaH-40);
+        ctx.fillText("PROPRIETÁRIO: " + p.toUpperCase(), folhaW-280, folhaH-60);
     }
 
-    // Atalhos de Teclado
+    // Teclado Dinâmico
     canvas.addEventListener('keydown', (e) => {
         if (!selecionado) return;
-        const step = 0.05; // Ajuste mais fino (5cm)
+        const step = 0.05;
         if (e.shiftKey) {
             if (e.key === "ArrowRight") selecionado.w += step;
             if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - step);
@@ -205,28 +156,21 @@
             if (e.key === "ArrowUp") selecionado.y -= 2;
         }
         if (e.key.toLowerCase() === "r") selecionado.rot = (selecionado.rot + 90) % 360;
-        if (e.key === "Delete" || e.key === "Backspace") {
-            noTerreno = noTerreno.filter(o => o.id !== selecionado.id);
-            selecionado = null;
-        }
-        desenhar();
-        e.preventDefault();
+        if (e.key === "Delete") { noTerreno = noTerreno.filter(o => o.id !== selecionado.id); selecionado = null; }
+        desenhar(); e.preventDefault();
     });
 
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect();
         const sc = folhaW / r.width;
         const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
-        
-        let encontrou = false;
+        selecionado = null;
         for (let i = noTerreno.length - 1; i >= 0; i--) {
             let o = noTerreno[i]; const w = o.w * escala, h = o.h * escala;
             if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
-                selecionado = o; offset.x = mx - o.x; offset.y = my - o.y;
-                encontrou = true; break;
+                selecionado = o; offset.x = mx - o.x; offset.y = my - o.y; break;
             }
         }
-        if(!encontrou) selecionado = null;
         desenhar();
     };
 
