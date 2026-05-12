@@ -2,53 +2,60 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>AutoPlanta Pro v17 - Edição Completa</title>
     <style>
-        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
+        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
+        #sidebar { width: 340px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
         #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px; }
         #inventory { width: 250px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
         input, select, button { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-export { background: var(--blue); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.5); outline: none; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Projeto de<span style="color:var(--blue)">Edificação</span></h2>
+    <h2>Projeto <span style="color:var(--blue)">Técnico</span></h2>
     
     <div class="section">
         <label><b>CONFIGURAR TERRENO (m)</b></label>
         <div style="display:flex; gap:5px;">
-            <input type="number" id="terr_w" value="20" title="Largura" oninput="desenhar()">
-            <input type="number" id="terr_h" value="30" title="Comprimento" oninput="desenhar()">
+            <input type="number" id="terr_w" value="20" oninput="desenhar()">
+            <input type="number" id="terr_h" value="30" oninput="desenhar()">
         </div>
     </div>
 
     <div class="section">
-        <label><b>DADOS DO DOCUMENTO</b></label>
+        <label><b>DADOS DO CLIENTE</b></label>
         <input type="text" id="cli_nome" placeholder="Nome do Cliente" oninput="desenhar()">
         <input type="text" id="resp_edit" placeholder="Responsável pela Edição" oninput="desenhar()">
         <input type="number" id="proj_ano" value="2026" oninput="desenhar()">
     </div>
 
     <div class="section">
-        <label><b>ADICIONAR ITEM</b></label>
+        <label><b>ADICIONAR ESTRUTURA</b></label>
         <select id="sel_tipo">
+            <optgroup label="Portas">
+                <option value="p_comum">Porta Comum (0.80m)</option>
+                <option value="p_social">Entrada Social (1.20m)</option>
+                <option value="p_dupla">Porta Dupla (1.60m)</option>
+                <option value="p_garagem">Portão Garagem (3.50m)</option>
+            </optgroup>
+            <optgroup label="Janelas">
+                <option value="j_dupla">Janela Dupla (1.50m)</option>
+                <option value="j_tripla">Janela Tripla (2.00m)</option>
+                <option value="j_banheiro_basc">Basculante Banheiro (0.60m)</option>
+                <option value="j_banheiro_dupla">Janela Banheiro Dupla (1.00m)</option>
+            </optgroup>
             <optgroup label="Cômodos">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro</option>
-            </optgroup>
-            <optgroup label="Acessos">
-                <option value="p_080">Porta 0.80m</option>
-                <option value="j_150">Janela 1.50m</option>
-                <option value="j_060">Basculante 0.60m</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
@@ -69,16 +76,23 @@
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const escala = 18; // Escala para caber tudo na folha
+    const escala = 18; 
     const folhaW = 1123; const folhaH = 794; 
     let estoque = [], noTerreno = [], selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
 
     function adicionarAoEstoque() {
         const t = document.getElementById('sel_tipo').value;
         let w = 3, h = 4;
-        if(t === 'p_080') { w = 0.8; h = 0.15; }
-        else if(t === 'j_150') { w = 1.5; h = 0.15; }
-        else if(t === 'j_060') { w = 0.6; h = 0.15; }
+        
+        // Definição de Larguras Específicas
+        const dims = {
+            'p_comum': 0.8, 'p_social': 1.2, 'p_dupla': 1.6, 'p_garagem': 3.5,
+            'j_dupla': 1.5, 'j_tripla': 2.0, 'j_banheiro_basc': 0.6, 'j_banheiro_dupla': 1.0
+        };
+        
+        if (dims[t]) { w = dims[t]; h = 0.15; }
+        else if (t === 'banheiro') { w = 1.5; h = 2.0; }
+
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
     }
@@ -89,7 +103,7 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.style.cssText = "background:#333; padding:8px; margin-bottom:5px; border-radius:4px; cursor:pointer; font-size:11px;";
-            div.innerHTML = `<b>${item.tipo.toUpperCase()}</b> (${item.w}m x ${item.h}m)`;
+            div.innerHTML = `<b>${item.tipo.replace('p_','PORTA ').replace('j_','JANELA ').toUpperCase()}</b><br>${item.w}m x ${item.h}m`;
             div.onclick = () => { noTerreno.push({...item, x:100, y:100, rot:0, id: Date.now()}); desenhar(); };
             container.appendChild(div);
         });
@@ -107,25 +121,14 @@
         
         let areaC = 0;
         noTerreno.forEach(o => { if(!o.tipo.startsWith('p') && !o.tipo.startsWith('j')) areaC += (o.w * o.h); });
-        const tw = Number(document.getElementById('terr_w').value);
-        const th = Number(document.getElementById('terr_h').value);
-        const areaT = tw * th;
+        const areaT = Number(document.getElementById('terr_w').value) * Number(document.getElementById('terr_h').value);
 
         ctx.font = "10px Arial";
         ctx.fillText(`ÁREA DO TERRENO: ${areaT.toFixed(2)} m²`, xQ + 10, 85);
         ctx.fillText(`ÁREA CONSTRUÍDA: ${areaC.toFixed(2)} m²`, xQ + 10, 105);
         ctx.fillText(`ÁREA LIVRE: ${(areaT - areaC).toFixed(2)} m²`, xQ + 10, 125);
 
-        // QUADRO DE ESQUADRIAS (Simplificado conforme imagem)
-        ctx.strokeRect(xQ, 160, 280, 150);
-        ctx.fillStyle = "#f0f0f0"; ctx.fillRect(xQ, 160, 280, 25);
-        ctx.fillStyle = "#000"; ctx.fillText("QUADRO DE ESQUADRIAS", xQ + 75, 177);
-        ctx.font = "9px Arial";
-        ctx.fillText("TIPO         DIMENSÃO         DESCRIÇÃO", xQ + 10, 200);
-        ctx.fillText("P1            0.80 x 2.10m      Porta de Madeira", xQ + 10, 220);
-        ctx.fillText("J1            1.50 x 1.10m      Janela de Correr", xQ + 10, 240);
-
-        // SELO FINAL ABNT
+        // SELO FINAL
         const sY = folhaH - 140;
         ctx.strokeRect(xQ, sY, 280, 100);
         ctx.beginPath(); ctx.moveTo(xQ, sY + 33); ctx.lineTo(xQ+280, sY + 33); 
@@ -141,29 +144,40 @@
         canvas.width = folhaW; canvas.height = folhaH;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Desenha Terreno
+        // Terreno
         const tw = document.getElementById('terr_w').value * escala;
         const th = document.getElementById('terr_h').value * escala;
         ctx.setLineDash([8, 4]); ctx.strokeStyle = "#bbb";
         ctx.strokeRect(40, 40, tw, th);
-        ctx.setLineDash([]); ctx.fillStyle = "#999";
-        ctx.fillText(`LIMITE DO TERRENO (${document.getElementById('terr_w').value}m x ${document.getElementById('terr_h').value}m)`, 40, 35);
+        ctx.setLineDash([]); 
 
-        // Desenha Itens
         noTerreno.forEach(obj => {
             const w = obj.w * escala; const h = obj.h * escala;
             ctx.save(); ctx.translate(obj.x + w/2, obj.y + h/2); ctx.rotate(obj.rot * Math.PI / 180);
             
-            if(obj.tipo.startsWith('j') || obj.tipo.startsWith('p')) {
+            if(obj.tipo.startsWith('j')) {
                 ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = obj.tipo.startsWith('j') ? "#00d2ff" : "#8b4513";
-                ctx.strokeRect(-w/2, -h/2, w, h);
-                if(obj.tipo.startsWith('j')) { ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke(); }
+                ctx.strokeStyle = obj.tipo.includes('banheiro') ? "#ff9800" : "#00d2ff";
+                ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
+                ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke();
+                if(obj.tipo.includes('tripla')) {
+                    ctx.moveTo(-w/6, -h/2); ctx.lineTo(-w/6, h/2);
+                    ctx.moveTo(w/6, -h/2); ctx.lineTo(w/6, h/2); ctx.stroke();
+                }
+            } else if(obj.tipo.startsWith('p')) {
+                ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
+                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
+                ctx.beginPath();
+                if(obj.tipo === 'p_dupla' || obj.tipo === 'p_garagem') {
+                    ctx.arc(-w/2, h/2, w/2, 0, -Math.PI/2, true);
+                    ctx.arc(w/2, h/2, w/2, Math.PI, Math.PI*1.5);
+                } else { ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); }
+                ctx.stroke();
             } else {
                 ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
             }
             ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
-            ctx.fillText(obj.tipo.toUpperCase(), -w/2, -h/2 - 5);
+            ctx.fillText(obj.tipo.toUpperCase().replace('P_','').replace('J_',''), -w/2, -h/2 - 5);
             ctx.restore();
         });
         desenharTécnico();
@@ -171,12 +185,11 @@
 
     function exportarProjeto() {
         const link = document.createElement('a');
-        link.download = `PROJETO_${document.getElementById('cli_nome').value || 'TECNICO'}_${document.getElementById('proj_ano').value}.png`;
+        link.download = `PROJETO_${document.getElementById('cli_nome').value || 'TECNICO'}.png`;
         link.href = canvas.toDataURL("image/png");
         link.click();
     }
 
-    // Interação
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width;
         const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
