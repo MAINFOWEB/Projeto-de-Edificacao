@@ -2,62 +2,60 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificações - Acessos Técnicos</title>
+    <title>Projeto de Edificação - Ajuste Dinâmico</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        
         #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
         #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; }
-        
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
         .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
-        
-        label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; display: block; margin-top: 5px; }
         input, select, button { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
-        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        
+        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
         #canvas-container { flex: 1; background: #333; display: flex; align-items: center; justify-content: center; overflow: auto; }
-        canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); outline: none; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Planta de <span style="color:var(--blue)">Edificação</span></h2>
-    
+    <h2>Projeto de  <span style="color:var(--blue)">Edificação</span></h2>
     <div class="section">
-        <label>Identificação do Projeto</label>
+        <label>Dados do Projeto</label>
         <input type="text" id="prop_nome" placeholder="Proprietário" oninput="desenhar()">
         <input type="text" id="proj_data" placeholder="Data" oninput="desenhar()">
     </div>
-
     <div class="section">
         <label>Selecionar Acesso / Estrutura</label>
         <select id="sel_tipo">
             <optgroup label="Portas e Acessos">
-                <option value="p_comum">Porta Comum (Giro - 0.80m)</option>
-                <option value="p_social">Porta Social (Dupla - 1.60m)</option>
-                <option value="p_garagem">Portão de Garagem (3.50m)</option>
+                <option value="p_comum">Porta Comum (0.80m)</option>
+                <option value="p_social">Porta Social (Dupla)</option>
+                <option value="p_garagem">Portão de Garagem</option>
             </optgroup>
             <optgroup label="Janelas">
-                <option value="j_simples">Janela Simples (1.20m)</option>
-                <option value="j_tripla">Janela Tripla (2.00m)</option>
+                <option value="j_simples">Janela Simples</option>
+                <option value="j_dupla">Janela Dupla</option>
+                <option value="j_tripla">Janela Tripla</option>
             </optgroup>
             <optgroup label="Cômodos">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="banheiro">Banheiro</option>
+                <option value="lavanderia">Lavanderia</option>
                 <option value="garagem_area">Área Coberta Garagem</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
     </div>
-
-    <button onclick="window.print()" style="background:#444">🖨️ GERAR PDF / IMPRIMIR</button>
+    <div style="font-size: 10px; color: #888; padding: 10px;">
+        💡 <b>DICA:</b> Selecione um bloco e use <b>SHIFT + Setas</b> para redimensionar!
+    </div>
 </div>
 
 <div id="canvas-container">
-    <canvas id="mainCanvas"></canvas>
+    <canvas id="mainCanvas" tabindex="1"></canvas>
 </div>
 
 <div id="inventory">
@@ -69,24 +67,16 @@
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
     const escala = 30;
-    const folhaW = 794; 
-    const folhaH = 1123;
-    let estoque = [];
-    let noTerreno = [];
-    let selecionado = null;
-    let offset = { x: 0, y: 0 };
+    const folhaW = 794; const folhaH = 1123;
+    let estoque = [], noTerreno = [], selecionado = null, offset = { x: 0, y: 0 };
 
     function adicionarAoEstoque() {
         const t = document.getElementById('sel_tipo').value;
         let w = 3, h = 4;
-        
-        // Definição de tamanhos padrão
-        if(t === 'p_comum') { w = 0.8; h = 0.15; }
-        else if(t === 'p_social') { w = 1.6; h = 0.15; }
-        else if(t === 'p_garagem') { w = 3.5; h = 0.25; }
-        else if(t === 'j_simples') { w = 1.2; h = 0.15; }
-        else if(t === 'j_tripla') { w = 2.0; h = 0.15; }
-        
+        if(t.includes('p_comum')) { w = 0.8; h = 0.15; }
+        else if(t.includes('p_social')) { w = 1.6; h = 0.15; }
+        else if(t.includes('p_garagem')) { w = 3.5; h = 0.25; }
+        else if(t.includes('banheiro')) { w = 1.5; h = 2.5; }
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
     }
@@ -97,26 +87,10 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.replace('_',' ').toUpperCase()}</strong><br>${item.w}m x ${item.h}m`;
+            div.innerHTML = `<strong>${item.tipo.replace('_',' ').toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
             div.onclick = () => { noTerreno.push({...item, x:200, y:200, rot:0}); desenhar(); };
             container.appendChild(div);
         });
-    }
-
-    function desenharSelo() {
-        const p = document.getElementById('prop_nome').value || "PROPRIETÁRIO";
-        const d = document.getElementById('proj_data').value || " / / ";
-        const pX = folhaW - 300; const pY = folhaH - 160;
-
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-        ctx.strokeRect(pX, pY, 260, 120);
-        ctx.beginPath(); ctx.moveTo(pX, pY+40); ctx.lineTo(pX+260, pY+40); 
-        ctx.moveTo(pX, pY+80); ctx.lineTo(pX+260, pY+80); ctx.stroke();
-
-        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
-        ctx.fillText("PROPRIETÁRIO: " + p.toUpperCase(), pX+10, pY+25);
-        ctx.fillText("DATA: " + d, pX+10, pY+65);
-        ctx.fillText("RESPONSÁVEL: MÁRCIO", pX+10, pY+105);
     }
 
     function desenhar() {
@@ -130,45 +104,71 @@
             ctx.translate(obj.x + w/2, obj.y + h/2);
             ctx.rotate(obj.rot * Math.PI / 180);
 
-            if(obj.tipo === 'p_comum') {
+            // Estilo visual por tipo
+            ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.1)" : "#fff";
+            if(obj.tipo.includes('p_comum')) {
                 ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2;
                 ctx.strokeRect(-w/2, -h/2, w, h);
                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
-            } else if(obj.tipo === 'p_social') {
-                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 3;
-                ctx.strokeRect(-w/2, -h/2, w, h);
-                ctx.beginPath(); ctx.moveTo(0, -h/2); ctx.lineTo(0, h/2); ctx.stroke();
-            } else if(obj.tipo === 'p_garagem') {
-                ctx.strokeStyle = "#000"; ctx.setLineDash([4, 2]);
-                ctx.strokeRect(-w/2, -h/2, w, h); ctx.setLineDash([]);
+            } else if(obj.tipo.includes('j_')) {
+                ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
+                let f = obj.tipo.includes('dupla') ? 2 : obj.tipo.includes('tripla') ? 3 : 1;
+                for(let i=1; i<f; i++) { ctx.beginPath(); ctx.moveTo(-w/2 + (w/f)*i, -h/2); ctx.lineTo(-w/2 + (w/f)*i, h/2); ctx.stroke(); }
             } else {
-                ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeRect(-w/2, -h/2, w, h);
+                ctx.fillRect(-w/2, -h/2, w, h);
+                ctx.strokeStyle = "#000"; ctx.lineWidth = obj === selecionado ? 4 : 2; ctx.strokeRect(-w/2, -h/2, w, h);
             }
             
-            ctx.fillStyle = "#000"; ctx.font = "8px Arial";
-            ctx.fillText(obj.tipo.toUpperCase(), -w/2, -h/2 - 5);
-            ctx.fillStyle = "rgba(0, 210, 255, 0.3)";
-            ctx.beginPath(); ctx.arc(0, -h/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#000"; ctx.font = "bold 8px Arial";
+            ctx.fillText(obj.tipo.toUpperCase() + ` (${obj.w.toFixed(1)}m)`, -w/2, -h/2 - 5);
             ctx.restore();
         });
-        desenharSelo();
+        
+        // Desenhar Selo (Mesma lógica da v8)
+        const p = document.getElementById('prop_nome').value || "PROPRIETÁRIO";
+        const d = document.getElementById('proj_data').value || " / / ";
+        ctx.strokeStyle = "#000"; ctx.strokeRect(folhaW - 300, folhaH - 160, 260, 120);
+        ctx.fillStyle = "#000"; ctx.fillText("PROPRIETÁRIO: " + p.toUpperCase(), folhaW-290, folhaH-135);
+        ctx.fillText("DATA: " + d, folhaW-290, folhaH-95);
+        ctx.fillText("RESPONSÁVEL: MÁRCIO", folhaW-290, folhaH-55);
     }
+
+    // Controle de Teclado Dinâmico
+    canvas.onkeydown = (e) => {
+        if (!selecionado) return;
+        const step = 0.1; // 10cm por clique
+        if (e.shiftKey) {
+            if (e.key === "ArrowRight") selecionado.w += step;
+            if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - step);
+            if (e.key === "ArrowDown") selecionado.h += step;
+            if (e.key === "ArrowUp") selecionado.h = Math.max(0.1, selecionado.h - step);
+        } else {
+            if (e.key === "ArrowRight") selecionado.x += 5;
+            if (e.key === "ArrowLeft") selecionado.x -= 5;
+            if (e.key === "ArrowDown") selecionado.y += 5;
+            if (e.key === "ArrowUp") selecionado.y -= 5;
+            if (e.key === "r" || e.key === "R") selecionado.rot = (selecionado.rot + 90) % 360;
+        }
+        desenhar();
+        e.preventDefault();
+    };
 
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect();
         const sc = folhaW / r.width;
         const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
+        selecionado = null;
         for (let i = noTerreno.length - 1; i >= 0; i--) {
             let o = noTerreno[i]; const w = o.w * escala; const h = o.h * escala;
-            if(Math.sqrt((mx-(o.x+w/2))**2 + (my-(o.y-15))**2) < 20) { o.rot = (o.rot+90)%360; desenhar(); return; }
             if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
                 selecionado = o; offset.x = mx - o.x; offset.y = my - o.y; break;
             }
         }
+        desenhar();
     };
+
     window.onmousemove = (e) => {
-        if (selecionado) {
+        if (selecionado && !e.shiftKey) {
             const r = canvas.getBoundingClientRect();
             const sc = folhaW / r.width;
             selecionado.x = (e.clientX - r.left) * sc - offset.x;
@@ -176,7 +176,7 @@
             desenhar();
         }
     };
-    window.onmouseup = () => selecionado = null;
+    window.onmouseup = () => { canvas.focus(); };
     desenhar();
 </script>
 </body>
