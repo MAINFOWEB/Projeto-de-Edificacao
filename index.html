@@ -1,146 +1,196 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AutoPlanta 2D - ABNT</title>
+    <title>AutoPlanta Pro - Design & Rotação</title>
     <style>
-        :root { --blue: #00d2ff; --dark: #1a1a1a; --gray: #333; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; }
+        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
         
-        /* Painel Lateral */
-        #sidebar { width: 350px; background: #222; padding: 20px; overflow-y: auto; border-right: 2px solid var(--gray); }
-        h2 { color: var(--blue); border-bottom: 1px solid var(--gray); padding-bottom: 10px; }
+        #sidebar { width: 320px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
+        #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; }
         
-        .section { background: #2b2b2b; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--blue); }
-        label { display: block; font-size: 14px; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 4px; border: none; background: #444; color: white; }
+        .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
+        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 12px; transition: 0.2s; }
+        .item-pronto:hover { border-color: var(--blue); background: #3d3d3d; }
+
+        input, select, button { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; }
+        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
+        .btn-manual { background: #555; color: white; cursor: pointer; font-size: 12px; margin-top: 20px; }
         
-        .btn-add { background: #28a745; color: white; border: none; padding: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 5px; }
-        .btn-generate { background: var(--blue); color: #000; border: none; padding: 15px; cursor: pointer; width: 100%; font-weight: bold; font-size: 16px; margin-top: 10px; }
+        #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: center; justify-content: center; position: relative; }
+        canvas { background: white; box-shadow: 0 0 50px rgba(0,0,0,0.5); }
         
-        /* Área do Desenho */
-        #canvas-container { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #444; position: relative; }
-        canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); cursor: crosshair; }
-        .tabs { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; }
-        .tab-btn { padding: 10px 20px; background: var(--gray); border: none; color: white; cursor: pointer; }
-        .tab-btn.active { background: var(--blue); color: black; }
+        /* Modal do Manual */
+        #modal-manual { display: none; position: fixed; top: 10%; left: 25%; width: 50%; background: #fff; color: #000; padding: 20px; border-radius: 10px; z-index: 100; box-shadow: 0 0 100px #000; }
+        .close-manual { float: right; cursor: pointer; font-weight: bold; color: red; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>Configurações</h2>
-    
-    <div class="tabs-ui">
-        <button class="tab-btn active" onclick="setAndar('terreo')">Térreo</button>
-        <button class="tab-btn" onclick="setAndar('superior')">2º Andar</button>
+    <h2><span style="color:var(--blue)">Auto</span>Planta v3</h2>
+    <div class="section">
+        <label>1. Criar Componente</label>
+        <select id="tipo_novo">
+            <optgroup label="Estrutura">
+                <option value="quarto">Quarto/Sala</option>
+                <option value="banheiro">Banheiro</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="piscina">Piscina</option>
+                <option value="escada">Escada</option>
+            </optgroup>
+            <optgroup label="Aberturas">
+                <option value="janela">Janela</option>
+                <option value="porta">Porta</option>
+                <option value="garagem">P. Garagem</option>
+            </optgroup>
+        </select>
+        <div style="display:flex; gap:5px">
+            <input type="number" id="w_novo" placeholder="Larg (m)" value="3">
+            <input type="number" id="h_novo" placeholder="Alt (m)" value="4">
+        </div>
+        <button class="btn-add" onclick="criarParaInventario()">ADICIONAR AO ESTOQUE</button>
     </div>
 
     <div class="section">
-        <label>Medidas do Terreno (m)</label>
-        <input type="number" id="terr_l" placeholder="Largura" value="10">
-        <input type="number" id="terr_c" placeholder="Comprimento" value="20">
+        <label>2. Terreno Principal (m)</label>
+        <input type="number" id="terr_l" value="10" oninput="renderizar()">
+        <input type="number" id="terr_c" value="20" oninput="renderizar()">
     </div>
-
-    <div id="comodos-area">
-        </div>
-
-    <button class="btn-add" onclick="novoComodo()">+ Adicionar Cômodo</button>
-    <button class="btn-generate" onclick="renderizar()">GERAR PLANTA TÉCNICA</button>
+    
+    <button class="btn-manual" onclick="toggleManual()">📖 ABRIR MANUAL DO USUÁRIO</button>
 </div>
 
 <div id="canvas-container">
-    <div class="tabs">
-        <span id="label-andar">Mostrando: Térreo</span>
-    </div>
-    <canvas id="mainCanvas" width="700" height="900"></canvas>
+    <canvas id="mainCanvas"></canvas>
+</div>
+
+<div id="inventory">
+    <h3>📦 Estoque</h3>
+    <div id="lista-inventario"></div>
+</div>
+
+<!-- MANUAL DO USUÁRIO -->
+<div id="modal-manual">
+    <span class="close-manual" onclick="toggleManual()">[FECHAR]</span>
+    <h3>Guia do Arquiteto AutoPlanta</h3>
+    <hr>
+    <p><strong>Ações de Mouse:</strong></p>
+    <ul>
+        <li><strong>Arrastar:</strong> Clique no centro do bloco para mover.</li>
+        <li><strong>Girar (Rotate):</strong> Clique na "bolinha" azul acima do bloco para girar 90°.</li>
+    </ul>
+    <p><strong>Legenda Técnica (ABNT):</strong></p>
+    <ul>
+        <li><span style="border: 2px solid black; padding: 0 5px;"></span> <strong>Linha Grossa:</strong> Paredes estruturais.</li>
+        <li><span style="color: blue;">■</span> <strong>Azul:</strong> Áreas molhadas (Piscina/Tanque).</li>
+        <li><span style="border-bottom: 2px solid #8b4513;"></span> <strong>Marrom:</strong> Portas e acessos.</li>
+    </ul>
 </div>
 
 <script>
-    // LÓGICA JAVASCRIPT
-    let andarAtual = 'terreo';
-    let projeto = {
-        terreo: [],
-        superior: []
-    };
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    let escala = 30; 
+    let projetoAtivo = [];
+    let inventario = [];
+    let selecionado = null;
+    let offset = { x: 0, y: 0 };
 
-    function setAndar(a) {
-        andarAtual = a;
-        document.getElementById('label-andar').innerText = "Mostrando: " + (a === 'terreo' ? 'Térreo' : '2º Andar');
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(a === 'terreo' ? 'térreo' : '2º')));
-        renderizar();
+    function criarParaInventario() {
+        const tipo = document.getElementById('tipo_novo').value;
+        const w = parseFloat(document.getElementById('w_novo').value);
+        const h = parseFloat(document.getElementById('h_novo').value);
+        inventario.push({ id: Date.now(), tipo, w, h });
+        atualizarPainelInventario();
     }
 
-    function novoComodo() {
-        const id = Date.now();
-        const div = document.createElement('div');
-        div.className = 'section';
-        div.id = `comodo-${id}`;
-        div.innerHTML = `
-            <select onchange="updateComodo(${id}, 'tipo', this.value)">
-                <option value="quarto">Quarto</option>
-                <option value="sala">Sala</option>
-                <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro</option>
-                <option value="escada">Escada</option>
-            </select>
-            <div style="display:flex; gap:5px">
-                <input type="number" placeholder="L" onchange="updateComodo(${id}, 'w', this.value)">
-                <input type="number" placeholder="C" onchange="updateComodo(${id}, 'h', this.value)">
-            </div>
-            <label><input type="checkbox" onchange="updateComodo(${id}, 'suite', this.checked)"> Suíte/Closet</label>
-            <button onclick="removerComodo(${id})" style="background:red; color:white; border:none; width:100%">Remover</button>
-        `;
-        document.getElementById('comodos-area').appendChild(div);
-        projeto[andarAtual].push({ id, tipo: 'quarto', w: 3, h: 3, suite: false });
-    }
-
-    function updateComodo(id, campo, valor) {
-        let c = projeto[andarAtual].find(i => i.id === id);
-        if(c) c[campo] = valor;
+    function atualizarPainelInventario() {
+        const lista = document.getElementById('lista-inventario');
+        lista.innerHTML = '';
+        inventario.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item-pronto';
+            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong> - ${item.w}x${item.h}m`;
+            div.onclick = () => { projetoAtivo.push({ ...item, x: 100, y: 100, rot: 0, id: Date.now() }); renderizar(); };
+            lista.appendChild(div);
+        });
     }
 
     function renderizar() {
-        const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
+        canvas.width = 700; canvas.height = 800;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        const escala = 30; // 1 metro = 30 pixels
-        
-        // Desenha Terreno
         const tl = document.getElementById('terr_l').value * escala;
         const tc = document.getElementById('terr_c').value * escala;
-        ctx.strokeStyle = "#000";
-        ctx.lineWidth = 2;
+
+        // DESENHO TERRENO
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
         ctx.strokeRect(50, 50, tl, tc);
 
-        // Desenha Cômodos do Andar Atual
-        let xOff = 55;
-        let yOff = 55;
-
-        projeto[andarAtual].forEach(c => {
-            const w = c.w * escala;
-            const h = c.h * escala;
+        projetoAtivo.forEach(obj => {
+            const w = obj.w * escala; const h = obj.h * escala;
             
-            ctx.fillStyle = "#fff";
+            ctx.save();
+            ctx.translate(obj.x + w/2, obj.y + h/2);
+            ctx.rotate(obj.rot * Math.PI / 180);
+            
+            // DESENHO DO BLOCO
+            ctx.fillStyle = obj.tipo === 'piscina' ? '#b3e5fc' : '#ffffff';
+            ctx.fillRect(-w/2, -h/2, w, h);
             ctx.strokeStyle = "#000";
-            ctx.lineWidth = 4; // Paredes conforme ABNT (linha grossa)
-            ctx.strokeRect(xOff, yOff, w, h);
+            ctx.lineWidth = (obj.tipo === 'janela' || obj.tipo === 'porta') ? 1 : 4;
+            ctx.strokeRect(-w/2, -h/2, w, h);
+
+            // TEXTO
+            ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
+            ctx.fillText(obj.tipo.toUpperCase(), -w/2 + 5, -h/2 + 15);
+
+            // BOTÃO DE ROTAÇÃO (UI)
+            ctx.fillStyle = "var(--blue)";
+            ctx.beginPath(); ctx.arc(0, -h/2 - 15, 8, 0, Math.PI*2); ctx.fill();
             
-            ctx.fillStyle = "#000";
-            ctx.font = "bold 12px Arial";
-            ctx.fillText(c.tipo.toUpperCase(), xOff + 5, yOff + 20);
-            ctx.font = "10px Arial";
-            ctx.fillText(`${c.w}x${c.h}m`, xOff + 5, yOff + 35);
-            
-            // Lógica simples de empilhamento lateral
-            xOff += w;
-            if(xOff > tl) { xOff = 55; yOff += h; }
+            ctx.restore();
         });
     }
-</script>
 
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left; const my = e.clientY - rect.top;
+
+        for (let i = projetoAtivo.length - 1; i >= 0; i--) {
+            let o = projetoAtivo[i];
+            const w = o.w * escala; const h = o.h * escala;
+            
+            // Checar se clicou no botão de rotação
+            const rotX = o.x + w/2; const rotY = o.y - 15;
+            const dist = Math.sqrt((mx - rotX)**2 + (my - rotY)**2);
+            
+            if(dist < 15) { o.rot = (o.rot + 90) % 360; renderizar(); return; }
+
+            if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
+                selecionado = o;
+                offset.x = mx - o.x; offset.y = my - o.y;
+                break;
+            }
+        }
+    };
+
+    window.onmousemove = (e) => {
+        if (selecionado) {
+            const rect = canvas.getBoundingClientRect();
+            selecionado.x = e.clientX - rect.left - offset.x;
+            selecionado.y = e.clientY - rect.top - offset.y;
+            renderizar();
+        }
+    };
+
+    window.onmouseup = () => { selecionado = null; };
+    function toggleManual() { 
+        const m = document.getElementById('modal-manual');
+        m.style.display = m.style.display === 'block' ? 'none' : 'block'; 
+    }
+    renderizar();
+</script>
 </body>
 </html>
