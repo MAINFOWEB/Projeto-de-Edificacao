@@ -57,6 +57,8 @@
                 <option value="banheiro">Banheiro</option>
                 <option value="garagem">Garagem</option>
                 <option value="lavanderia">Lavanderia</option>
+                <option value="piscina">Piscina</option>
+                
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
@@ -95,6 +97,7 @@
         else if(t === 'garagem') { w = 3.5; h = 5.5; }
         else if(t === 'lavanderia') { w = 2.0; h = 3.0; }
         else if(t === 'banheiro') { w = 1.5; h = 2.5; }
+        else if(t === 'piscina') { w = 3,0; h = 6,0 }
 
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
