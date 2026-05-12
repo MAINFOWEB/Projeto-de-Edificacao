@@ -1,66 +1,64 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoPlanta Pro v4 - Componentes Avançados</title>
+    <title>AutoPlanta Pro v6 - Padrão ABNT & Assinatura</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
         
-        #sidebar { width: 340px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
-        #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; }
+        #sidebar { width: 320px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; }
+        #inventory { width: 280px; background: #181818; padding: 15px; border-left: 1px solid #333; }
         
-        .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; transition: 0.2s; position: relative; }
-        .item-pronto:hover { border-color: var(--blue); background: #3d3d3d; }
-
-        label { font-size: 12px; color: #aaa; }
-        input, select, button { width: 100%; padding: 8px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
-        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .section { background: #252525; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
+        .item-pronto { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
         
-        #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: center; justify-content: center; position: relative; }
-        canvas { background: white; box-shadow: 0 0 50px rgba(0,0,0,0.5); cursor: crosshair; }
+        label { font-size: 10px; color: #888; text-transform: uppercase; font-weight: bold; }
+        select, button, input { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
+        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
         
-        .badge { background: #444; padding: 2px 5px; border-radius: 3px; font-size: 9px; margin-right: 5px; }
+        #canvas-container { flex: 1; background: #444; display: flex; align-items: center; justify-content: center; overflow: auto; }
+        canvas { background: white; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        
+        .abnt-table { font-size: 10px; color: #ccc; width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .abnt-table td { border: 1px solid #444; padding: 4px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2>AutoPlanta <span style="color:var(--blue)">v4</span></h2>
+    <h2>AutoPlanta <span style="color:var(--blue)">v6</span></h2>
     
     <div class="section">
-        <label>1. Categoria</label>
-        <select id="cat_novo" onchange="ajustarSubtipos()">
-            <option value="estrutura">Estrutura (Paredes)</option>
-            <option value="abertura">Aberturas (Janela/Porta)</option>
+        <label>Componente</label>
+        <select id="tipo_item" onchange="aplicarPadrao()">
+            <optgroup label="Estrutura">
+                <option value="quarto">Quarto</option>
+                <option value="sala">Sala de Estar</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="garagem_box">Garagem (Área)</option>
+            </optgroup>
+            <optgroup label="Aberturas">
+                <option value="porta_social">P1 - Porta Social</option>
+                <option value="porta_dupla">P2 - Porta Dupla</option>
+                <option value="portao_garagem">PG - Portão Garagem</option>
+                <option value="janela_2f">J1 - Janela</option>
+            </optgroup>
         </select>
-
-        <label>2. Tipo de Objeto</label>
-        <select id="tipo_novo"></select>
-
-        <label>3. Modelo / Divisões</label>
-        <select id="modelo_novo">
-            <option value="1">Simples (Única)</option>
-            <option value="2">Dupla (2 Folhas)</option>
-            <option value="3">Tripla (3 Folhas)</option>
-        </select>
-
-        <label>4. Dimensões (Metros)</label>
-        <div style="display:flex; gap:5px">
-            <input type="number" id="w_novo" placeholder="Larg" value="3.0" step="0.1">
-            <input type="number" id="h_novo" placeholder="Alt" value="4.0" step="0.1">
-        </div>
-        <button class="btn-add" onclick="criarParaInventario()">+ ADICIONAR AO ESTOQUE</button>
+        <button class="btn-add" onclick="mandarProEstoque()">+ ESTOQUE</button>
     </div>
 
     <div class="section">
-        <label>Configurações do Terreno</label>
-        <div style="display:flex; gap:5px">
-            <input type="number" id="terr_l" value="10" oninput="renderizar()">
-            <input type="number" id="terr_c" value="20" oninput="renderizar()">
-        </div>
+        <label>Siglas ABNT (Referência)</label>
+        <table class="abnt-table">
+            <tr><td><b>P</b></td><td>Porta</td><td><b>J</b></td><td>Janela</td></tr>
+            <tr><td><b>H</b></td><td>Pé-direito</td><td><b>i</b></td><td>Inclinação</td></tr>
+            <tr><td><b>N</b></td><td>Nível</td><td><b>PG</b></td><td>P. Garagem</td></tr>
+        </table>
     </div>
+
+    <button onclick="window.print()" style="background:#007bff">🖨️ PREPARAR IMPRESSÃO</button>
 </div>
 
 <div id="canvas-container">
@@ -68,154 +66,134 @@
 </div>
 
 <div id="inventory">
-    <h3>📦 Itens Prontos</h3>
-    <div id="lista-inventario"></div>
+    <h3>📦 Estoque</h3>
+    <div id="lista-estoque"></div>
 </div>
 
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    let escala = 30; 
-    let projetoAtivo = [];
-    let inventario = [];
+    const escala = 30;
+    let estoque = [];
+    let noTerreno = [];
     let selecionado = null;
     let offset = { x: 0, y: 0 };
 
-    // Configuração inicial de menus
-    function ajustarSubtipos() {
-        const cat = document.getElementById('cat_novo').value;
-        const tipoSelect = document.getElementById('tipo_novo');
-        const modeloSelect = document.getElementById('modelo_novo');
-        tipoSelect.innerHTML = '';
-        
-        if(cat === 'estrutura') {
-            const itens = ['Quarto', 'Sala', 'Cozinha', 'Banheiro', 'Garagem', 'Piscina'];
-            itens.forEach(i => tipoSelect.innerHTML += `<option value="${i.toLowerCase()}">${i}</option>`);
-            modeloSelect.disabled = true;
-        } else {
-            const itens = ['Janela', 'Porta', 'Portão'];
-            itens.forEach(i => tipoSelect.innerHTML += `<option value="${i.toLowerCase()}">${i}</option>`);
-            modeloSelect.disabled = false;
-        }
+    // Dimensões da folha A4 em pixels (aproximado para 72dpi)
+    const folhaW = 794; 
+    const folhaH = 1123;
+
+    function mandarProEstoque() {
+        const tipo = document.getElementById('tipo_item').value;
+        estoque.push({ id: Date.now(), tipo: tipo, w: 3.0, h: 4.0 }); // Simplificado para o exemplo
+        atualizarEstoqueUI();
     }
 
-    function criarParaInventario() {
-        const cat = document.getElementById('cat_novo').value;
-        const tipo = document.getElementById('tipo_novo').value;
-        const modelo = parseInt(document.getElementById('modelo_novo').value);
-        const w = parseFloat(document.getElementById('w_novo').value);
-        const h = parseFloat(document.getElementById('h_novo').value);
-        
-        inventario.push({ id: Date.now(), cat, tipo, modelo, w, h });
-        atualizarPainelInventario();
-    }
-
-    function atualizarPainelInventario() {
-        const lista = document.getElementById('lista-inventario');
-        lista.innerHTML = '';
-        inventario.forEach(item => {
+    function atualizarEstoqueUI() {
+        const container = document.getElementById('lista-estoque');
+        container.innerHTML = '';
+        estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            const modLabel = item.cat === 'abertura' ? `(${item.modelo}F)` : '';
-            div.innerHTML = `<span class="badge">${item.tipo.toUpperCase()}</span> ${item.w}x${item.h}m ${modLabel}`;
-            div.onclick = () => { 
-                projetoAtivo.push({ ...item, x: 150, y: 150, rot: 0, id: Date.now() }); 
-                renderizar(); 
-            };
-            lista.appendChild(div);
+            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong>`;
+            div.onclick = () => { noTerreno.push({...item, x:100, y:100, rot:0}); desenhar(); };
+            container.appendChild(div);
         });
     }
 
-    function renderizar() {
-        canvas.width = 700; canvas.height = 850;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        const tl = document.getElementById('terr_l').value * escala;
-        const tc = document.getElementById('terr_c').value * escala;
+    function desenharSelo() {
+        const margem = 40;
+        const seloW = 250;
+        const seloH = 120;
+        const posX = folhaW - seloW - margem;
+        const posY = folhaH - seloH - margem;
 
-        // TERRENO
-        ctx.strokeStyle = "#444"; ctx.setLineDash([5, 5]);
-        ctx.strokeRect(50, 50, tl, tc);
+        ctx.strokeStyle = "#000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(posX, posY, seloW, seloH);
+
+        // Divisões do Selo
+        ctx.beginPath();
+        ctx.moveTo(posX, posY + 30); ctx.lineTo(posX + seloW, posY + 30);
+        ctx.moveTo(posX, posY + 60); ctx.lineTo(posX + seloW, posY + 60);
+        ctx.stroke();
+
+        // Textos do Selo
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("PROPRIETÁRIO: MÁRCIO", posX + 10, posY + 20);
+        
+        ctx.font = "10px Arial";
+        ctx.fillText("DATA: 12/05/2026", posX + 10, posY + 50);
+        ctx.fillText("ESCALA: 1:50", posX + 150, posY + 50);
+        
+        ctx.font = "bold 10px Arial";
+        ctx.fillText("ASSINATURA DO RESPONSÁVEL:", posX + 10, posY + 80);
+        ctx.setLineDash([2, 2]);
+        ctx.beginPath(); ctx.moveTo(posX + 10, posY + 105); ctx.lineTo(posX + seloW - 10, posY + 105); ctx.stroke();
         ctx.setLineDash([]);
+    }
 
-        projetoAtivo.forEach(obj => {
+    function desenhar() {
+        canvas.width = folhaW;
+        canvas.height = folhaH;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Moldura da Folha (Margem ABNT)
+        ctx.strokeStyle = "#ccc";
+        ctx.strokeRect(20, 20, folhaW-40, folhaH-40);
+
+        noTerreno.forEach(obj => {
             const w = obj.w * escala; const h = obj.h * escala;
             ctx.save();
             ctx.translate(obj.x + w/2, obj.y + h/2);
             ctx.rotate(obj.rot * Math.PI / 180);
+
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+            ctx.strokeRect(-w/2, -h/2, w, h);
             
-            if(obj.cat === 'estrutura') {
-                ctx.fillStyle = obj.tipo === 'piscina' ? '#b3e5fc' : '#ffffff';
-                ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; ctx.lineWidth = 4;
-                ctx.strokeRect(-w/2, -h/2, w, h);
-            } else {
-                // DESENHO DE JANELAS/PORTAS BASEADO NO MODELO (FOLHAS)
-                ctx.fillStyle = "#fff";
-                ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = obj.tipo === 'janela' ? "#00d2ff" : "#8b4513";
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-w/2, -h/2, w, h);
-
-                // Linhas de Divisão (Tetris/Figma style)
-                const step = w / obj.modelo;
-                for(let i=1; i < obj.modelo; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(-w/2 + (step * i), -h/2);
-                    ctx.lineTo(-w/2 + (step * i), h/2);
-                    ctx.stroke();
-                }
-                
-                // Detalhe Portão Garagem
-                if(obj.tipo === 'portão') {
-                    ctx.setLineDash([2, 2]);
-                    ctx.strokeRect(-w/2 + 2, -h/2 + 2, w - 4, h - 4);
-                    ctx.setLineDash([]);
-                }
-            }
-
-            ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
-            ctx.fillText(obj.tipo.toUpperCase(), -w/2 + 3, -h/2 + 12);
-
-            // Botão Girar
-            ctx.fillStyle = "var(--blue)";
-            ctx.beginPath(); ctx.arc(0, -h/2 - 15, 6, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = "#000"; ctx.font = "9px Arial";
+            ctx.fillText(obj.tipo.toUpperCase(), -w/2 + 5, -h/2 + 15);
+            
+            // Ícone de Rotação (Apenas visual no app)
+            ctx.fillStyle = "rgba(0, 210, 255, 0.5)";
+            ctx.beginPath(); ctx.arc(0, -h/2 - 10, 5, 0, Math.PI*2); ctx.fill();
             
             ctx.restore();
         });
+
+        desenharSelo();
     }
 
+    // Eventos de Mouse (Arraste e Giro)
     canvas.onmousedown = (e) => {
         const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left; const my = e.clientY - rect.top;
-
-        for (let i = projetoAtivo.length - 1; i >= 0; i--) {
-            let o = projetoAtivo[i];
+        const mx = (e.clientX - rect.left) * (folhaW / rect.width);
+        const my = (e.clientY - rect.top) * (folhaH / rect.height);
+        
+        for (let i = noTerreno.length - 1; i >= 0; i--) {
+            let o = noTerreno[i];
             const w = o.w * escala; const h = o.h * escala;
-            const rotX = o.x + w/2; const rotY = o.y - 15;
-            const dist = Math.sqrt((mx - rotX)**2 + (my - rotY)**2);
-            
-            if(dist < 15) { o.rot = (o.rot + 90) % 360; renderizar(); return; }
+            const dist = Math.sqrt((mx - (o.x + w/2))**2 + (my - (o.y - 10))**2);
+            if(dist < 20) { o.rot = (o.rot + 90) % 360; desenhar(); return; }
             if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
-                selecionado = o;
-                offset.x = mx - o.x; offset.y = my - o.y;
-                break;
+                selecionado = o; offset.x = mx - o.x; offset.y = my - o.y; break;
             }
         }
     };
-
     window.onmousemove = (e) => {
         if (selecionado) {
             const rect = canvas.getBoundingClientRect();
-            selecionado.x = e.clientX - rect.left - offset.x;
-            selecionado.y = e.clientY - rect.top - offset.y;
-            renderizar();
+            const mx = (e.clientX - rect.left) * (folhaW / rect.width);
+            const my = (e.clientY - rect.top) * (folhaH / rect.height);
+            selecionado.x = mx - offset.x; selecionado.y = my - offset.y;
+            desenhar();
         }
     };
-
-    window.onmouseup = () => { selecionado = null; };
-    ajustarSubtipos();
-    renderizar();
+    window.onmouseup = () => selecionado = null;
+    desenhar();
 </script>
 </body>
 </html>
-
