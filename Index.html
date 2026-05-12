@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Gerador de Projetos de Edificações 2D - ABNT</title>
+    <style>
+        body { font-family: Arial; background: #222; color: #fff; display: flex; }
+        #sidebar { width: 300px; padding: 20px; background: #333; height: 100vh; overflow-y: auto; }
+        #preview { flex: 1; display: flex; justify-content: center; align-items: center; background: #eee; }
+        canvas { background: white; border: 2px solid #000; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .campo { margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="number"] { width: 60px; }
+        button { width: 100%; padding: 10px; background: #00d2ff; border: none; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="sidebar">
+    <h2>Configurar Projeto</h2>
+    
+    <div class="campo">
+        <label>Tipo de Imóvel:</label>
+        <input type="radio" name="tipo" value="casa" checked> Casa
+        <input type="radio" name="tipo" value="apto"> Apto
+    </div>
+
+    <div class="campo">
+        <label>Terreno (Metros):</label>
+        Larg: <input type="number" id="terr_larg" value="10"> 
+        Comp: <input type="number" id="terr_comp" value="20">
+    </div>
+
+    <div class="campo">
+        <label>Quarto 1:</label>
+        <input type="radio" name="q1_tipo" value="casal" checked> Casal
+        <input type="radio" name="q1_tipo" value="solteiro"> Solteiro
+        <br>
+        <input type="checkbox" id="q1_suite"> Com Suíte
+        <input type="checkbox" id="q1_closet"> Com Closet
+    </div>
+
+    <div class="campo">
+        <label>Outros Cômodos:</label>
+        <input type="checkbox" id="tem_piscina"> Piscina
+        <input type="checkbox" id="tem_garagem"> Garagem
+        <input type="checkbox" id="tem_kitnet"> Kitnet
+    </div>
+
+    <button onclick="desenharProjeto()">Gerar Planta 2D</button>
+</div>
+
+<div id="preview">
+    <canvas id="plantaCanvas" width="800" height="600"></canvas>
+</div>
+
+<script>
+    function desenharProjeto() {
+        const canvas = document.getElementById('plantaCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Limpar canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        const larg = document.getElementById('terr_larg').value * 20; // Escala simples
+        const comp = document.getElementById('terr_comp').value * 20;
+
+        // Desenhar Terreno (Norma ABNT: Linha grossa contínua)
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(50, 50, larg, comp);
+
+        // Exemplo: Se tiver piscina, desenha um retângulo azul
+        if(document.getElementById('tem_piscina').checked) {
+            ctx.fillStyle = "rgba(0, 210, 255, 0.3)";
+            ctx.fillRect(60, 60, 100, 50);
+            ctx.strokeRect(60, 60, 100, 50);
+            ctx.fillStyle = "black";
+            ctx.fillText("PISCINA", 80, 90);
+        }
+
+        alert("Planta base gerada! Agora seria necessário programar a lógica de encaixe dos cômodos.");
+    }
+</script>
+
+</body>
+</html>
