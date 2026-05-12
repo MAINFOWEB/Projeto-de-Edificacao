@@ -2,29 +2,40 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>Projeto de Edificações</title>
     <style>
-        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; }
+        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
+        
         #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
         #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 50px; }
         #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
+
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
         .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
+        .item-pronto:hover { border-color: var(--blue); }
+
         input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
         canvas { background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.6); outline: none; }
+
+        /* Estilo do Manual */
+        .manual { font-size: 11px; color: #aaa; line-height: 1.5; padding: 10px; background: #1a1a1a; border-radius: 4px; margin-top: 10px; }
+        .manual b { color: var(--blue); }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
     <h2>Projeto de <span style="color:var(--blue)">Edificação</span></h2>
+    
     <div class="section">
-        <label><b>DADOS DO PROJETO</b></label>
+        <label><b>DADOS</b></label>
         <input type="text" id="prop_nome" placeholder="Proprietário" oninput="desenhar()">
         <input type="text" id="proj_data" placeholder="Data (00/00/0000)" oninput="desenhar()">
     </div>
+
     <div class="section">
         <label><b>SELECIONAR ESTRUTURA</b></label>
         <select id="sel_tipo">
@@ -39,16 +50,24 @@
                 <option value="p_comum">Porta Comum (0.80m)</option>
                 <option value="p_social">Porta Social (1.60m)</option>
             </optgroup>
-            <optgroup label="Janelas Padrão">
+            <optgroup label="Janelas">
+                <option value="j_simples">Janela Simples (1.20m)</option>
                 <option value="j_dupla">Janela Dupla (1.50m)</option>
-                <option value="j_tripla">Janela Tripla (2.00m)</option>
-            </optgroup>
-            <optgroup label="Janelas de Banheiro">
-                <option value="j_banheiro_simples">Janela Basculante (0.60m)</option>
+                <option value="j_basculante">Janela Basculante (0.60m)</option>
                 <option value="j_banheiro_dupla">Janela Banheiro Dupla (1.00m)</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
+    </div>
+
+    <div class="manual">
+        <b>📖 MANUAL RÁPIDO:</b><br>
+        1. Escolha o item e clique no botão verde.<br>
+        2. Clique no item dentro do <b>Estoque</b> (à direita) para ele aparecer na folha.<br>
+        3. <b>Arraste:</b> Clique e segure para mover.<br>
+        4. <b>Tamanho:</b> Selecione e use <b>SHIFT + Setas</b>.<br>
+        5. <b>Girar:</b> Aperte a tecla <b>R</b>.<br>
+        6. <b>Deletar:</b> Aperte <b>Delete</b>.
     </div>
 </div>
 
@@ -57,7 +76,7 @@
 </div>
 
 <div id="inventory">
-    <h3>📦 Itens Criados</h3>
+    <h3>📦 Estoque</h3>
     <div id="lista-estoque"></div>
 </div>
 
@@ -66,18 +85,20 @@
     const ctx = canvas.getContext('2d');
     const escala = 30; 
     const folhaW = 794; const folhaH = 1123;
-    let estoque = [], noTerreno = [], selecionado = null, offset = { x: 0, y: 0 };
+    let estoque = [], noTerreno = [], selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
 
     function adicionarAoEstoque() {
         const t = document.getElementById('sel_tipo').value;
         let w = 3.0, h = 4.0;
         
-        // Novos tamanhos específicos para janelas de banheiro
-        if(t === 'j_banheiro_simples') { w = 0.6; h = 0.15; }
-        else if(t === 'j_banheiro_dupla') { w = 1.0; h = 0.15; }
-        else if(t === 'p_comum') { w = 0.8; h = 0.15; }
-        else if(t === 'banheiro') { w = 1.5; h = 2.5; }
-        else if(t === 'j_dupla') { w = 1.5; h = 0.15; }
+        // Correção na lógica de criação de portas e janelas
+        if(t.startsWith('p_')) { w = (t === 'p_comum') ? 0.8 : 1.6; h = 0.15; }
+        else if(t.startsWith('j_')) {
+            if(t.includes('basculante')) w = 0.6;
+            else if(t.includes('banheiro')) w = 1.0;
+            else w = (t === 'j_simples') ? 1.2 : 1.5;
+            h = 0.15;
+        } else if(t === 'banheiro') { w = 1.5; h = 2.5; }
 
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
@@ -89,8 +110,11 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.replace(/_/g,' ').toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
-            div.onclick = () => { noTerreno.push({...item, x:100, y:100, rot:0, id: Date.now()}); desenhar(); };
+            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
+            div.onclick = () => { 
+                noTerreno.push({...item, x:100, y:100, rot:0, id: Date.now()}); 
+                desenhar(); 
+            };
             container.appendChild(div);
         });
     }
@@ -107,41 +131,54 @@
 
             ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.15)" : "#fff";
             
-            // Desenho diferenciado para janelas de banheiro (tracejado ou cor diferente se quiser)
-            if(obj.tipo.includes('banheiro')) {
-                ctx.strokeStyle = "#ff9800"; // Laranja para destacar janelas de banheiro
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-w/2, -h/2, w, h);
+            if(obj.tipo.startsWith('j_')) {
+                ctx.strokeStyle = obj.tipo.includes('banheiro') || obj.tipo.includes('basculante') ? "#ff9800" : "#00d2ff";
+                ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
                 ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke();
-            } else if(obj.tipo.includes('j_')) {
-                ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2;
-                ctx.strokeRect(-w/2, -h/2, w, h);
-                let f = obj.tipo.includes('tripla') ? 3 : 2;
-                for(let i=1; i<f; i++) { ctx.beginPath(); ctx.moveTo(-w/2 + (w/f)*i, -h/2); ctx.lineTo(-w/2 + (w/f)*i, h/2); ctx.stroke(); }
-            } else if(obj.tipo.includes('p_')) {
-                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2;
-                ctx.strokeRect(-w/2, -h/2, w, h);
+            } else if(obj.tipo.startsWith('p_')) {
+                ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
             } else {
                 ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; ctx.lineWidth = obj === selecionado ? 3 : 1;
-                ctx.strokeRect(-w/2, -h/2, w, h);
+                ctx.strokeStyle = "#000"; ctx.lineWidth = obj === selecionado ? 3 : 1.5; ctx.strokeRect(-w/2, -h/2, w, h);
             }
             
             ctx.fillStyle = "#000"; ctx.font = "9px Arial";
-            ctx.fillText(`${obj.tipo.replace(/_/g,' ').toUpperCase()} (${obj.w.toFixed(2)}m)`, -w/2, -h/2 - 5);
+            ctx.fillText(`${obj.tipo.toUpperCase()} (${obj.w.toFixed(2)}m)`, -w/2, -h/2 - 5);
             ctx.restore();
         });
-        
-        // Selo
-        const p = document.getElementById('prop_nome').value || "PROPRIETÁRIO";
-        ctx.fillStyle = "#000"; ctx.font = "bold 12px Arial";
-        ctx.fillText("RESPONSÁVEL TÉCNICO: MÁRCIO", folhaW-280, folhaH-40);
-        ctx.fillText("PROPRIETÁRIO: " + p.toUpperCase(), folhaW-280, folhaH-60);
     }
 
-    // Teclado Dinâmico
-    canvas.addEventListener('keydown', (e) => {
+    // CORREÇÃO: Mouse agora solta o bloco mesmo se sair do canvas
+    canvas.onmousedown = (e) => {
+        const r = canvas.getBoundingClientRect();
+        const sc = folhaW / r.width;
+        const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
+        
+        selecionado = null;
+        for (let i = noTerreno.length - 1; i >= 0; i--) {
+            let o = noTerreno[i]; const w = o.w * escala, h = o.h * escala;
+            if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
+                selecionado = o; arrastando = true;
+                offset.x = mx - o.x; offset.y = my - o.y; break;
+            }
+        }
+        desenhar();
+    };
+
+    window.onmousemove = (e) => {
+        if (arrastando && selecionado) {
+            const r = canvas.getBoundingClientRect();
+            const sc = folhaW / r.width;
+            selecionado.x = (e.clientX - r.left) * sc - offset.x;
+            selecionado.y = (e.clientY - r.top) * sc - offset.y;
+            desenhar();
+        }
+    };
+
+    window.onmouseup = () => { arrastando = false; };
+
+    canvas.onkeydown = (e) => {
         if (!selecionado) return;
         const step = 0.05;
         if (e.shiftKey) {
@@ -149,39 +186,12 @@
             if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - step);
             if (e.key === "ArrowDown") selecionado.h += step;
             if (e.key === "ArrowUp") selecionado.h = Math.max(0.1, selecionado.h - step);
-        } else {
-            if (e.key === "ArrowRight") selecionado.x += 2;
-            if (e.key === "ArrowLeft") selecionado.x -= 2;
-            if (e.key === "ArrowDown") selecionado.y += 2;
-            if (e.key === "ArrowUp") selecionado.y -= 2;
+        } else if (e.key.toLowerCase() === "r") {
+            selecionado.rot = (selecionado.rot + 90) % 360;
+        } else if (e.key === "Delete") {
+            noTerreno = noTerreno.filter(o => o.id !== selecionado.id); selecionado = null;
         }
-        if (e.key.toLowerCase() === "r") selecionado.rot = (selecionado.rot + 90) % 360;
-        if (e.key === "Delete") { noTerreno = noTerreno.filter(o => o.id !== selecionado.id); selecionado = null; }
         desenhar(); e.preventDefault();
-    });
-
-    canvas.onmousedown = (e) => {
-        const r = canvas.getBoundingClientRect();
-        const sc = folhaW / r.width;
-        const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
-        selecionado = null;
-        for (let i = noTerreno.length - 1; i >= 0; i--) {
-            let o = noTerreno[i]; const w = o.w * escala, h = o.h * escala;
-            if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
-                selecionado = o; offset.x = mx - o.x; offset.y = my - o.y; break;
-            }
-        }
-        desenhar();
-    };
-
-    window.onmousemove = (e) => {
-        if (selecionado && !e.shiftKey) {
-            const r = canvas.getBoundingClientRect();
-            const sc = folhaW / r.width;
-            selecionado.x = (e.clientX - r.left) * sc - offset.x;
-            selecionado.y = (e.clientY - r.top) * sc - offset.y;
-            desenhar();
-        }
     };
 
     canvas.onclick = () => canvas.focus();
