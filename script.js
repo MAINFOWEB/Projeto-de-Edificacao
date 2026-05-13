@@ -26,6 +26,14 @@ function ajustarZoom(delta, btn) {
     if (btn) btn.blur(); 
 }
 
+// Calcula área do terreno automaticamente
+function calcularArea() {
+    const larg = parseFloat(document.getElementById('terr_larg').value) || 0;
+    const comp = parseFloat(document.getElementById('terr_comp').value) || 0;
+    document.getElementById('area_terreno').value = (larg * comp).toFixed(2);
+    desenhar();
+}
+
 function adicionarAoEstoque() {
     const tipo = document.getElementById('sel_tipo').value;
     const cor = document.getElementById('cor_escolhida').value;
@@ -85,15 +93,18 @@ function desenharItem(o) {
 
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Grade (Grid)
     ctx.strokeStyle = "#eee"; ctx.lineWidth = 0.5; ctx.setLineDash([]);
     for(let i=0; i<canvas.width; i+=escalaPx) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
     for(let j=0; j<canvas.height; j+=escalaPx) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
     itens.forEach(desenharItem);
     
+    // SELO DE INFORMAÇÕES (CANTO INFERIOR DIREITO)
     const sX = canvas.width - 440, sY = canvas.height - 240;
     ctx.fillStyle = "#fff"; ctx.fillRect(sX, sY, 400, 200);
-    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2; ctx.setLineDash([]);
     ctx.strokeRect(sX, sY, 400, 200);
     
     ctx.fillStyle = "#333"; ctx.font = "12px Segoe UI"; ctx.textAlign = "left";
@@ -103,11 +114,16 @@ function desenhar() {
     let andarAtual = document.getElementById('sel_andar_view').value;
     let areaTotal = itens.filter(i => i.andar.toString() === andarAtual.toString()).reduce((sum, i) => sum + (i.w * i.h), 0).toFixed(2);
     ctx.fillText("ÁREA PAVIMENTO: " + areaTotal + " m²", sX + 20, sY + 110);
-    ctx.fillText("ÁREA TERRENO: " + (document.getElementById('area_terreno').value || "0") + " m²", sX + 20, sY + 145);
+    
+    const larg = document.getElementById('terr_larg').value || "0";
+    const comp = document.getElementById('terr_comp').value || "0";
+    const areaT = document.getElementById('area_terreno').value || "0";
+    ctx.fillText(`TERRENO: ${larg}m x ${comp}m (${areaT} m²)`, sX + 20, sY + 145);
+    
     ctx.fillText("DATA: " + new Date().toLocaleDateString(), sX + 20, sY + 180);
 }
 
-// CORREÇÃO DA SELEÇÃO: Calcula a escala real para o clique não "fugir" com o zoom
+// Escuta de eventos para seleção e arrasto
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
     const escalaRealX = r.width / canvas.width;
@@ -156,7 +172,7 @@ window.addEventListener('keydown', (e) => {
     if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 90) % 360;
     if(e.key === 'Delete' || e.key === 'Backspace') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
     
-    // Seta para CIMA aumenta / Seta para BAIXO diminui
+    // Setas de redimensionamento (Invertidas conforme solicitado)
     if(e.key === 'ArrowUp') selecionado.h += step;
     if(e.key === 'ArrowDown') selecionado.h = Math.max(0.1, selecionado.h - step);
     if(e.key === 'ArrowRight') selecionado.w += step;
