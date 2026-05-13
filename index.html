@@ -2,38 +2,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAINFOWEB - Projeto de Edificações</title>
-    <style>
-        :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --red: #dc3545; --water: #4db8ff; }
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        
-        #sidebar { width: 320px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
-        #canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; padding: 40px; }
-        #inventory { width: 220px; background: #181818; padding: 15px; border-left: 1px solid #333; overflow-y: auto; }
-        
-        .section { background: #252525; padding: 10px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 8px; margin-bottom: 5px; border-radius: 4px; cursor: pointer; font-size: 11px; border: 1px solid #444; }
-        
-        input, select, button { width: 100%; padding: 8px; margin: 4px 0; border-radius: 4px; border: none; background: #333; color: white; font-size: 13px; }
-        .btn-add { background: var(--green); cursor: pointer; font-weight: bold; }
-        .btn-print { background: var(--blue); color: #000; cursor: pointer; font-weight: bold; margin-top: 10px; }
-        
-        canvas { background: white; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform-origin: top center; cursor: crosshair; }
-
-        .zoom-controls { position: fixed; bottom: 20px; left: 340px; display: flex; gap: 10px; z-index: 100; }
-        .zoom-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--blue); background: #000; color: var(--blue); cursor: pointer; font-size: 20px; }
-
-        @media print {
-            #sidebar, #inventory, .zoom-controls { display: none !important; }
-            body { background: white; }
-            canvas { transform: scale(1) !important; box-shadow: none; }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="sidebar">
-    <h3 style="color: var(--blue); margin-top: 0;">Projeto de Edificaçaõ</h3>
+    <h3 style="color: #00d2ff; text-align: center;">PROJETO DE EDIFICAÇÃO</h3>
     
     <div class="section">
         <label>🎨 COR DO CÔMODO</label>
@@ -75,6 +51,7 @@
     </div>
 
     <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
+    <button class="btn-reset" onclick="limparTudo()">LIMPAR PLANTA</button>
 </div>
 
 <div class="zoom-controls">
@@ -87,148 +64,10 @@
 </div>
 
 <div id="inventory">
-    <h4 style="margin: 0 0 10px 0;">📦 ESTOQUE</h4>
+    <h4 style="margin: 0 0 10px 0; color: #00d2ff; border-bottom: 1px solid #333; padding-bottom: 5px;">📦 ESTOQUE</h4>
     <div id="lista-estoque"></div>
 </div>
 
-<script>
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
-    const escalaPx = 35; 
-    canvas.width = 1122; canvas.height = 1587;
-    
-    let itens = [];
-    let estoque = [];
-    let selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
-    let zoom = 0.5;
-
-    canvas.style.transform = `scale(${zoom})`;
-
-    function ajustarZoom(delta) {
-        zoom = Math.min(Math.max(0.2, zoom + delta), 2.0);
-        canvas.style.transform = `scale(${zoom})`;
-    }
-
-    function adicionarAoEstoque() {
-        const tipo = document.getElementById('sel_tipo').value;
-        const cor = document.getElementById('cor_escolhida').value;
-        
-        const tamanhos = {
-            'piscina': {w: 6, h: 3},
-            'quarto': {w: 4, h: 4},
-            'sala': {w: 5, h: 4},
-            'cozinha': {w: 3, h: 4},
-            'banheiro': {w: 1.5, h: 2.5},
-            'suite_master': {w: 6, h: 5},
-            'garagem': {w: 3.5, h: 6},
-            'cama_casal': {w: 1.6, h: 2.0},
-            'cama_solteiro': {w: 0.9, h: 2.0},
-            'mesa_6': {w: 1.8, h: 1.0},
-            'sofa_3': {w: 2.2, h: 0.9},
-            'porta': {w: 0.8, h: 0.1},
-            'janela': {w: 1.5, h: 0.1}
-        };
-
-        const dim = tamanhos[tipo] || {w: 3, h: 3};
-        estoque.push({ id: Date.now(), tipo, w: dim.w, h: dim.h, cor });
-        atualizarEstoqueUI();
-    }
-
-    function atualizarEstoqueUI() {
-        const container = document.getElementById('lista-estoque');
-        container.innerHTML = '';
-        estoque.forEach(i => {
-            const div = document.createElement('div');
-            div.className = 'item-pronto';
-            div.style.borderLeft = `4px solid ${i.cor}`;
-            div.innerHTML = `<strong>${i.tipo.toUpperCase()}</strong><br>${i.w}m x ${i.h}m`;
-            div.onclick = () => { 
-                itens.push({...i, x: 50, y: 50, rot: 0, id: Date.now()}); 
-                desenhar(); 
-            };
-            container.appendChild(div);
-        });
-    }
-
-    function desenharItem(o) {
-        const w = o.w * escalaPx, h = o.h * escalaPx;
-        ctx.save();
-        ctx.translate(o.x + w/2, o.y + h/2);
-        ctx.rotate(o.rot * Math.PI / 180);
-
-        if (o.tipo === 'piscina') {
-            ctx.fillStyle = '#4db8ff'; // Azul Piscina
-            ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#005c99"; ctx.lineWidth = 3;
-            ctx.strokeRect(-w/2, -h/2, w, h);
-            // Efeito de borda da piscina
-            ctx.lineWidth = 1; ctx.strokeRect(-w/2 + 5, -h/2 + 5, w - 10, h - 10);
-        } else if (['cama_casal','cama_solteiro','mesa_6','sofa_3'].includes(o.tipo)) {
-            ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#666"; ctx.lineWidth = 1; ctx.strokeRect(-w/2, -h/2, w, h);
-        } else if (o.tipo === 'porta' || o.tipo === 'janela') {
-            ctx.fillStyle = o.tipo === 'janela' ? "#add8e6" : "#8b4513";
-            ctx.fillRect(-w/2, -h/2, w, h);
-        } else {
-            ctx.fillStyle = o.cor; ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
-        }
-
-        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
-        ctx.fillText(o.tipo.toUpperCase(), -w/2 + 5, -h/2 + 15);
-        
-        if(o === selecionado) {
-            ctx.strokeStyle = "red"; ctx.lineWidth = 2;
-            ctx.strokeRect(-w/2 - 5, -h/2 - 5, w + 10, h + 10);
-        }
-        ctx.restore();
-    }
-
-    function desenhar() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        itens.forEach(desenharItem);
-        // Selo
-        ctx.strokeStyle = "#000"; ctx.strokeRect(canvas.width - 440, canvas.height - 240, 400, 200);
-        ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
-        ctx.fillText("MAINFOWEB - ENGENHARIA", canvas.width - 420, canvas.height - 200);
-        ctx.font = "12px Arial";
-        ctx.fillText("CLIENTE: " + (document.getElementById('cli_nome').value || "---"), canvas.width - 420, canvas.height - 160);
-        ctx.fillText("TÉCNICO: " + (document.getElementById('resp_tec').value || "---"), canvas.width - 420, canvas.height - 130);
-    }
-
-    canvas.onmousedown = (e) => {
-        const r = canvas.getBoundingClientRect();
-        const mx = (e.clientX - r.left) / zoom;
-        const my = (e.clientY - r.top) / zoom;
-        selecionado = null;
-        for(let i = itens.length - 1; i >= 0; i--) {
-            let o = itens[i];
-            if(mx >= o.x && mx <= o.x + o.w*escalaPx && my >= o.y && my <= o.y + o.h*escalaPx) {
-                selecionado = o; arrastando = true;
-                offset.x = mx - o.x; offset.y = my - o.y; break;
-            }
-        }
-        desenhar();
-    };
-
-    window.onmousemove = (e) => {
-        if(arrastando && selecionado) {
-            const r = canvas.getBoundingClientRect();
-            selecionado.x = ((e.clientX - r.left) / zoom) - offset.x;
-            selecionado.y = ((e.clientY - r.top) / zoom) - offset.y;
-            desenhar();
-        }
-    };
-
-    window.onmouseup = () => arrastando = false;
-    window.onkeydown = (e) => {
-        if(!selecionado) return;
-        if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 90) % 360;
-        if(e.key === 'Delete') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
-        desenhar();
-    };
-
-    desenhar();
-</script>
+<script src="script.js"></script>
 </body>
 </html>
