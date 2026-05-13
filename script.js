@@ -109,18 +109,32 @@ function desenhar() {
 
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
+    // Ajuste importante: arredondar ou garantir coordenadas exatas
     const mx = (e.clientX - r.left) / zoom;
     const my = (e.clientY - r.top) / zoom;
-    const andarAtual = document.getElementById('sel_andar_view').value;
+    
+    // Pegamos o valor do andar atual como String para comparar corretamente
+    const andarVisivel = document.getElementById('sel_andar_view').value.toString();
     
     selecionado = null;
+    
+    // Percorremos do último para o primeiro (quem está em cima recebe o clique)
     for(let i = itens.length - 1; i >= 0; i--) {
         let o = itens[i];
-        if(o.andar !== andarAtual) continue;
-        if(mx >= o.x && mx <= o.x + o.w*escalaPx && my >= o.y && my <= o.y + o.h*escalaPx) {
-            selecionado = o; arrastando = true;
-            mouseOffset.x = mx - o.x; mouseOffset.y = my - o.y;
-            break;
+        
+        // Só permite selecionar se o item pertencer ao andar que estamos vendo
+        if(o.andar.toString() === andarVisivel) {
+            const larguraPx = o.w * escalaPx;
+            const alturaPx = o.h * escalaPx;
+
+            // Verifica se o mouse está dentro dos limites do objeto
+            if(mx >= o.x && mx <= o.x + larguraPx && my >= o.y && my <= o.y + alturaPx) {
+                selecionado = o; 
+                arrastando = true;
+                mouseOffset.x = mx - o.x; 
+                mouseOffset.y = my - o.y;
+                break; // Para no primeiro item encontrado (o que está no topo)
+            }
         }
     }
     desenhar();
