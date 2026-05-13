@@ -2,26 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAINFOWEB - Projeto de Edificações</title>
+    <title>MAINFOWEB - Projeto de Edificação</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="sidebar">
-    <h3 style="color: #00d2ff; text-align: center;">PROJETO DE EDIFICAÇÃO</h3>
+    <h3 class="logo">MAINFOWEB - Projeto de Edificação</h3>
     
     <div class="section">
         <label>🎨 COR DO CÔMODO</label>
-        <input type="color" id="cor_escolhida" value="#e0f7fa">
+        <div class="color-picker-container">
+            <input type="color" id="cor_escolhida" value="#e0f7fa" onchange="atualizaPreviewCor()">
+            <div id="preview-cor" style="background-color: #e0f7fa;"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <label>🏢 PAVIMENTO</label>
+        <select id="sel_andar">
+            <option value="1">1º Andar (Térreo)</option>
+            <option value="2">2º Andar (Superior)</option>
+        </select>
     </div>
 
     <div class="section">
         <label>📐 COMPONENTE</label>
         <select id="sel_tipo">
-            <optgroup label="Áreas Externas">
-                <option value="piscina">Piscina (6x3m)</option>
-                <option value="garagem">Garagem</option>
+            <optgroup label="Áreas Especiais">
+                <option value="piscina">Piscina</option>
+                <option value="kitnet">Kitnet Completa</option>
+                <option value="lavanderia">Lavanderia</option>
+                <option value="corredor">Corredor (Área Social)</option>
+            </optgroup>
+            <optgroup label="Escadas">
+                <option value="escada_reta">Escada Reta</option>
+                <option value="escada_l">Escada em L</option>
             </optgroup>
             <optgroup label="Cômodos">
                 <option value="quarto">Quarto</option>
@@ -29,12 +45,13 @@
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro</option>
                 <option value="suite_master">Suíte Master</option>
+                <option value="garagem">Garagem</option>
             </optgroup>
             <optgroup label="Mobiliário">
                 <option value="cama_casal">Cama Casal</option>
                 <option value="cama_solteiro">Cama Solteiro</option>
-                <option value="mesa_6">Mesa (6 Lugares)</option>
-                <option value="sofa_3">Sofá 3 Lugares</option>
+                <option value="mesa_6">Mesa (6 Lug)</option>
+                <option value="sofa_3">Sofá (3 Lug)</option>
             </optgroup>
             <optgroup label="Acessos">
                 <option value="porta">Porta (0.80m)</option>
@@ -46,12 +63,12 @@
 
     <div class="section">
         <label>📄 DADOS DO PROJETO</label>
-        <input type="text" id="cli_nome" placeholder="Cliente" oninput="desenhar()">
-        <input type="text" id="resp_tec" placeholder="Técnico" oninput="desenhar()">
+        <input type="text" id="cli_nome" placeholder="Nome do Cliente" oninput="desenhar()">
+        <input type="text" id="resp_tec" placeholder="Responsável Técnico" oninput="desenhar()">
     </div>
 
-    <button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR / PDF</button>
-    <button class="btn-reset" onclick="limparTudo()">LIMPAR PLANTA</button>
+    <button class="btn-print" onclick="window.print()">🖨️ GERAR PDF / IMPRIMIR</button>
+    <button class="btn-reset" onclick="limparTudo()">REINICIAR TUDO</button>
 </div>
 
 <div class="zoom-controls">
@@ -64,8 +81,9 @@
 </div>
 
 <div id="inventory">
-    <h4 style="margin: 0 0 10px 0; color: #00d2ff; border-bottom: 1px solid #333; padding-bottom: 5px;">📦 ESTOQUE</h4>
+    <h4>📦 ESTOQUE</h4>
     <div id="lista-estoque"></div>
+    <div class="dica">Pressione <b>R</b> para girar<br><b>DEL</b> para apagar</div>
 </div>
 
 <script src="script.js"></script>
