@@ -19,10 +19,18 @@
     </div>
 
     <div class="section">
-        <label>🏢 PAVIMENTO</label>
+        <label>🏢 PAVIMENTO (CRIAR)</label>
         <select id="sel_andar">
             <option value="1">1º Andar (Térreo)</option>
             <option value="2">2º Andar (Superior)</option>
+        </select>
+    </div>
+
+    <div class="section">
+        <label>👁️ EXIBIR NO PAPEL</label>
+        <select id="sel_andar_view" onchange="desenhar()">
+            <option value="1">Ver 1º Andar</option>
+            <option value="2">Ver 2º Andar</option>
         </select>
     </div>
 
@@ -43,10 +51,6 @@
                 <option value="corredor">Corredor</option>
                 <option value="garagem">Garagem</option>
                 <option value="piscina">Piscina</option>
-            </optgroup>
-            <optgroup label="Escadas">
-                <option value="escada_reta">Escada Reta</option>
-                <option value="escada_l">Escada em L</option>
             </optgroup>
             <optgroup label="Mobiliário">
                 <option value="mesa_4">Mesa (4 Lug)</option>
@@ -87,6 +91,7 @@
     <div id="lista-estoque"></div>
     <div class="info-uso">
         <b>R</b>: Girar | <b>DEL</b>: Apagar<br>
+        <b>SETAS</b>: Alterar Tamanho<br>
         Clique e arraste para mover.
     </div>
 </div>
