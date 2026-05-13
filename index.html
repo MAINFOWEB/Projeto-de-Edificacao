@@ -2,18 +2,13 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>Projeto de Edificação - MAINFOWEB</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; --red: #dc3545; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
         
-        /* Painel Lateral */
         #sidebar { width: 350px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; z-index: 10; }
-        
-        /* Área do Desenho com Scroll e Centralização */
         #canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 60px; position: relative; }
-        
-        /* Estoque de Itens */
         #inventory { width: 240px; background: #181818; padding: 15px; border-left: 1px solid #333; overflow-y: auto; }
         
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
@@ -24,11 +19,11 @@
         .btn-add { background: var(--green); cursor: pointer; font-weight: bold; }
         .btn-reset { background: var(--red); cursor: pointer; font-weight: bold; margin-top: 10px; }
         
-        /* Folha A4 e Zoom */
-        canvas { background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.8); cursor: crosshair; transform-origin: top center; transition: transform 0.1s ease-out; }
+        canvas { background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.8); cursor: crosshair; transform-origin: top center; }
         
         .zoom-controls { position: fixed; bottom: 20px; right: 270px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 30px; display: flex; gap: 10px; z-index: 100; border: 1px solid #444; }
         .zoom-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--blue); background: #111; color: var(--blue); cursor: pointer; font-weight: bold; font-size: 20px; }
+        .logo span { color: var(--blue); }
     </style>
 </head>
 <body>
@@ -48,27 +43,33 @@
                 <option value="suite_simples">Suíte (C/ Banheiro)</option>
                 <option value="kitnet">Kitnet (C/ Banheiro)</option>
             </optgroup>
-            <optgroup label="Cômodos Avulsos">
+            <optgroup label="Cômodos e Áreas">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro Social</option>
+                <option value="area_servico">Área de Serviço</option>
+                <option value="area_comum_reta">Área Comum (Reta)</option>
+                <option value="area_comum_l">Área Comum (L)</option>
                 <option value="garagem">Garagem</option>
                 <option value="piscina">Piscina</option>
-                <option value="area_servico">Área de Serviço</option>
             </optgroup>
-            <optgroup label="Circulação e Acessos">
-                <option value="escada_l">Escada em L</option>
-                <option value="escada_reta">Escada Reta</option>
+            <optgroup label="Mobiliário">
+                <option value="sofa_2">Sofá 2 Lugares</option>
+                <option value="sofa_3">Sofá 3 Lugares</option>
+                <option value="mesa_4">Mesa Jantar (4 Cad.)</option>
+                <option value="mesa_6">Mesa Jantar (6 Cad.)</option>
+                <option value="mesa_8">Mesa Jantar (8 Cad.)</option>
+                <option value="cama_casal">Cama Casal</option>
+                <option value="cama_solteiro">Cama Solteiro</option>
+                <option value="armario_cozinha">Armário Cozinha</option>
+            </optgroup>
+            <optgroup label="Esquadrias">
                 <option value="porta">Porta (0.80m)</option>
                 <option value="porta_dupla">Porta Dupla (1.60m)</option>
                 <option value="portao_garagem">Portão Garagem (3.5m)</option>
                 <option value="janela">Janela (1.5m)</option>
-            </optgroup>
-            <optgroup label="Mobiliário (Opcional)">
-                <option value="cama">Cama Casal</option>
-                <option value="sofa">Sofá</option>
-                <option value="mesa">Mesa de Jantar</option>
+                <option value="escada_l">Escada em L</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">MANDAR PARA ESTOQUE</button>
@@ -81,7 +82,6 @@
     </div>
 
     <button class="btn-reset" onclick="limparTudo()">RECOMEÇAR TUDO</button>
-    <p style="font-size: 10px; color: #888; margin-top: 15px;">Dicas: 'R' para girar o item selecionado. 'DEL' para excluir.</p>
 </div>
 
 <div class="zoom-controls">
@@ -101,18 +101,14 @@
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    
-    // Configuração Folha A4 (Proporcional a pixels)
-    const escala = 30; // 1 metro = 30 pixels
-    canvas.width = 1122; // Largura A4
-    canvas.height = 1587; // Altura A4
+    const escala = 30; 
+    canvas.width = 1122; canvas.height = 1587;
     
     let itens = [];
     let estoque = [];
     let selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
-    let zoom = 0.6; // Zoom inicial para caber na tela
+    let zoom = 0.6;
 
-    // Inicialização do Zoom
     canvas.style.transform = `scale(${zoom})`;
 
     function ajustarZoom(delta) {
@@ -125,15 +121,19 @@
         const cor = document.getElementById('cor_escolhida').value;
         let w = 4, h = 4;
 
-        // Definição de tamanhos padrão (metros)
         if(tipo === 'suite_master') { w = 6; h = 8; }
-        if(tipo === 'kitnet') { w = 5; h = 6; }
-        if(tipo === 'banheiro') { w = 2; h = 3; }
-        if(tipo === 'escada_l') { w = 2.5; h = 2.5; }
-        if(tipo === 'portao_garagem') { w = 3.5; h = 0.25; }
-        if(tipo === 'porta') { w = 0.8; h = 0.2; }
-        if(tipo === 'janela') { w = 1.5; h = 0.2; }
-        if(tipo === 'piscina') { w = 4; h = 7; }
+        else if(tipo === 'kitnet') { w = 5; h = 6; }
+        else if(tipo === 'banheiro') { w = 2; h = 3; }
+        else if(tipo === 'area_comum_reta') { w = 2; h = 6; }
+        else if(tipo === 'area_comum_l') { w = 4; h = 4; }
+        else if(tipo === 'sofa_2') { w = 1.6; h = 0.9; }
+        else if(tipo === 'sofa_3') { w = 2.2; h = 0.9; }
+        else if(tipo === 'mesa_4') { w = 1.2; h = 1.2; }
+        else if(tipo === 'mesa_6') { w = 1.8; h = 1.0; }
+        else if(tipo === 'mesa_8') { w = 2.4; h = 1.1; }
+        else if(tipo === 'cama_casal') { w = 1.6; h = 2.0; }
+        else if(tipo === 'cama_solteiro') { w = 0.9; h = 2.0; }
+        else if(tipo === 'armario_cozinha') { w = 3.0; h = 0.6; }
 
         estoque.push({ id: Date.now(), tipo, w, h, cor });
         atualizarEstoqueUI();
@@ -146,7 +146,7 @@
             const div = document.createElement('div');
             div.className = 'item-pronto';
             div.style.borderLeft = `5px solid ${i.cor}`;
-            div.innerHTML = `<b>${i.tipo.toUpperCase().replace('_',' ')}</b><br>${i.w}m x ${i.h}m`;
+            div.innerHTML = `<b>${i.tipo.toUpperCase().replace(/_/g,' ')}</b><br>${i.w}m x ${i.h}m`;
             div.onclick = () => { 
                 itens.push({...i, x: 200, y: 200, rot: 0, id: Date.now()}); 
                 desenhar(); 
@@ -155,20 +155,20 @@
         });
     }
 
-    function desenharSelo() {
-        const sW = 400, sH = 200;
-        const x = canvas.width - sW - 50, y = canvas.height - sH - 50;
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(x, y, sW, sH);
-        ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
-        ctx.fillText("MAINFOWEB - ENGENHARIA DIGITAL", x + 20, y + 40);
-        ctx.font = "14px Arial";
-        ctx.fillText("CLIENTE: " + (document.getElementById('cli_nome').value || "Não informado"), x + 20, y + 80);
-        ctx.fillText("RESPONSÁVEL: " + (document.getElementById('resp_tec').value || "Márcio"), x + 20, y + 110);
-        
-        let totalArea = 0;
-        itens.forEach(i => { if(!i.tipo.includes('porta') && !i.tipo.includes('janela')) totalArea += (i.w * i.h); });
-        ctx.font = "bold 14px Arial";
-        ctx.fillText("ÁREA TOTAL ESTIMADA: " + totalArea.toFixed(2) + " m²", x + 20, y + 170);
+    function desenharMesa(w, h, cadeiras) {
+        ctx.strokeRect(-w/2, -h/2, w, h); // Mesa
+        const cadSize = 0.4 * escala;
+        // Desenha cadeiras simplificadas ao redor
+        if(cadeiras >= 4) {
+            ctx.fillRect(-w/2 + 10, -h/2 - cadSize, cadSize, cadSize); // Topo
+            ctx.fillRect(-w/2 + 10, h/2, cadSize, cadSize); // Baixo
+        }
+        if(cadeiras >= 6) {
+            ctx.fillRect(w/2 - 10 - cadSize, -h/2 - cadSize, cadSize, cadSize);
+            ctx.fillRect(w/2 - 10 - cadSize, h/2, cadSize, cadSize);
+        }
+        ctx.fillRect(-w/2 - cadSize, -h/2 + 10, cadSize, cadSize); // Lado esq
+        ctx.fillRect(w/2, -h/2 + 10, cadSize, cadSize); // Lado dir
     }
 
     function desenharItem(o) {
@@ -177,78 +177,72 @@
         ctx.translate(o.x + w/2, o.y + h/2);
         ctx.rotate(o.rot * Math.PI / 180);
 
-        // Ordem de desenho por tipo
-        if(!o.tipo.includes('porta') && !o.tipo.includes('janela') && !['cama','sofa','mesa'].includes(o.tipo)) {
-            // Cômodos principais
+        const isMoveis = ['sofa_2','sofa_3','mesa_4','mesa_6','mesa_8','cama_casal','cama_solteiro','armario_cozinha'].includes(o.tipo);
+        const isEsquadria = o.tipo.includes('porta') || o.tipo.includes('janela') || o.tipo.includes('portao');
+
+        if(!isEsquadria && !isMoveis) {
             ctx.fillStyle = o.cor;
             ctx.fillRect(-w/2, -h/2, w, h);
             ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.strokeRect(-w/2, -h/2, w, h);
 
-            // Detalhes Suíte Master (Closet pontilhado e Banheiro linha cheia)
             if(o.tipo === 'suite_master') {
-                // Banheiro (Linha cheia)
                 ctx.lineWidth = 2;
-                ctx.strokeRect(-w/2, h/2 - (2.5*escala), (2.5*escala), (2.5*escala));
-                // Closet (Pontilhado conforme pedido)
+                ctx.strokeRect(-w/2, h/2 - (2.5*escala), (2.5*escala), (2.5*escala)); // Banheiro
                 ctx.setLineDash([8, 6]);
-                ctx.strokeRect(w/2 - (2.5*escala), h/2 - (2.5*escala), (2.5*escala), (2.5*escala));
+                ctx.strokeRect(w/2 - (2.5*escala), h/2 - (2.5*escala), (2.5*escala), (2.5*escala)); // Closet
                 ctx.setLineDash([]);
             }
-
-            // Escada em L
-            if(o.tipo === 'escada_l') {
+            if(o.tipo === 'area_comum_l') {
                 ctx.beginPath(); ctx.moveTo(-w/2, -h/2); ctx.lineTo(w/2, -h/2); ctx.lineTo(w/2, h/2);
-                ctx.lineTo(0, h/2); ctx.lineTo(0, 0); ctx.lineTo(-w/2, 0); ctx.closePath(); ctx.stroke();
-                for(let i=1; i<5; i++) {
-                    ctx.moveTo(-w/2, -h/2+(i*10)); ctx.lineTo(w/2, -h/2+(i*10));
-                    ctx.moveTo(w/2-(i*10), -h/2); ctx.lineTo(w/2-(i*10), h/2);
-                }
-                ctx.stroke();
+                ctx.lineTo(0, h/2); ctx.lineTo(0, 0); ctx.lineTo(-w/2, 0); ctx.closePath(); ctx.fill(); ctx.stroke();
             }
         } 
-        // Portas e Janelas (Esquadrias)
-        else if(o.tipo.includes('porta') || o.tipo.includes('portao')) {
-            ctx.fillStyle = "#8b4513"; ctx.fillRect(-w/2, -h/2, w, h);
-            if(o.tipo !== 'portao_garagem') {
+        else if(isMoveis) {
+            ctx.fillStyle = "#fff"; ctx.strokeStyle = "#555"; ctx.lineWidth = 1;
+            if(o.tipo.includes('mesa')) {
+                const num = parseInt(o.tipo.split('_')[1]);
+                desenharMesa(w, h, num);
+            } else {
+                ctx.fillRect(-w/2, -h/2, w, h);
+                ctx.strokeRect(-w/2, -h/2, w, h);
+                if(o.tipo.includes('sofa')) { // Detalhe braços sofá
+                    ctx.strokeRect(-w/2, -h/2, escala*0.2, h);
+                    ctx.strokeRect(w/2 - escala*0.2, -h/2, escala*0.2, h);
+                }
+            }
+        }
+        else { // Esquadrias
+            ctx.fillStyle = o.tipo === 'janela' ? "#add8e6" : "#8b4513";
+            ctx.fillRect(-w/2, -h/2, w, h);
+            if(o.tipo.includes('porta') && o.tipo !== 'portao_garagem') {
                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
             }
-        } else if(o.tipo === 'janela') {
-            ctx.fillStyle = "#add8e6"; ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeRect(-w/2, -h/2, w, h);
-            ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke();
-        }
-        // Móveis
-        else {
-            ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#999"; ctx.lineWidth = 1; ctx.strokeRect(-w/2, -h/2, w, h);
         }
 
-        // Nome do cômodo
-        ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial";
-        ctx.fillText(o.tipo.split('_')[0].toUpperCase(), -w/2 + 5, -h/2 + 15);
-
-        // Destaque de Seleção
-        if(o === selecionado) { ctx.strokeStyle = var(--blue); ctx.lineWidth = 3; ctx.strokeRect(-w/2-5, -h/2-5, w+10, h+10); }
+        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
+        ctx.fillText(o.tipo.toUpperCase().replace(/_/g,' '), -w/2 + 5, -h/2 + 12);
+        if(o === selecionado) { ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 3; ctx.strokeRect(-w/2-5, -h/2-5, w+10, h+10); }
         ctx.restore();
+    }
+
+    function desenharSelo() {
+        const sW = 400, sH = 200, x = canvas.width - sW - 50, y = canvas.height - sH - 50;
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(x, y, sW, sH);
+        ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
+        ctx.fillText("MAINFOWEB - ENGENHARIA DIGITAL", x + 20, y + 40);
+        ctx.font = "14px Arial";
+        ctx.fillText("CLIENTE: " + (document.getElementById('cli_nome').value || "---"), x + 20, y + 80);
+        ctx.fillText("RESPONSÁVEL: " + (document.getElementById('resp_tec').value || "Márcio"), x + 20, y + 110);
     }
 
     function desenhar() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Z-Index: 1.Cômodos -> 2.Móveis -> 3.Esquadrias
-        const ordem = (t) => {
-            if(t.includes('porta') || t.includes('janela') || t.includes('portao')) return 3;
-            if(['cama','sofa','mesa'].includes(t)) return 2;
-            return 1;
-        };
-        
-        itens.sort((a,b) => ordem(a.tipo) - ordem(b.tipo)).forEach(desenharItem);
+        itens.forEach(desenharItem);
         desenharSelo();
     }
 
     function limparTudo() { if(confirm("Apagar planta atual?")) { itens = []; desenhar(); } }
 
-    // Eventos de Mouse com Correção de Zoom
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect();
         const mx = (e.clientX - r.left) / zoom;
@@ -275,7 +269,6 @@
 
     window.onmouseup = () => arrastando = false;
     
-    // Atalhos de Teclado
     window.onkeydown = (e) => {
         if(!selecionado) return;
         if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 45) % 360;
