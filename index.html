@@ -10,13 +10,27 @@
 <div id="sidebar">
     <h3 class="titulo-topo">Projeto de <span class="azul">Edificação</span></h3>
     
-    <div class="section">
-        <label>🎨 COR DO CÔMODO</label>
-        <div class="color-picker-container">
-            <input type="color" id="cor_escolhida" value="#e0f7fa" onchange="atualizaPreviewCor()">
-            <div id="preview-cor"></div>
-        </div>
+  <!-- COR DO CÔMODO COM PREVIEW -->
+<div class="bloco-config">
+    <label>🎨 COR DO CÔMODO</label>
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <input type="color" id="cor_escolhida" value="#00d2ff" oninput="document.getElementById('cor_preview').style.backgroundColor = this.value">
+        <div id="cor_preview" style="width: 30px; height: 30px; border-radius: 50%; background: #00d2ff; border: 2px solid #555;"></div>
     </div>
+</div>
+
+<!-- DADOS TÉCNICOS COM LARGURA x COMPRIMENTO -->
+<div class="bloco-config">
+    <label>📋 DADOS TÉCNICOS</label>
+    <input type="text" id="cli_nome" placeholder="Nome do Cliente">
+    <input type="text" id="resp_tec" placeholder="Responsável Técnico">
+    <div style="display: flex; gap: 5px; margin-top: 5px;">
+        <input type="number" id="terr_larg" placeholder="Larg. (m)" oninput="calcularArea()">
+        <span style="color: #eee; align-self: center;">x</span>
+        <input type="number" id="terr_comp" placeholder="Comp. (m)" oninput="calcularArea()">
+    </div>
+    <input type="hidden" id="area_terreno" value="0">
+</div>
 
     <div class="section">
         <label>🏢 PAVIMENTO (CRIAR)</label>
