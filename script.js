@@ -19,14 +19,12 @@ const tamanhosBase = {
     'janela_dupla': {w: 2.5, h: 0.15}, 'janela_basculante': {w: 0.6, h: 0.15}
 };
 
-// Gerencia o zoom e remove o foco do botão para não travar o teclado
 function ajustarZoom(delta, btn) {
     zoom = Math.min(Math.max(0.1, zoom + delta), 1.5);
     canvas.style.transform = `scale(${zoom})`;
     if (btn) btn.blur(); 
 }
 
-// Calcula área do terreno automaticamente
 function calcularArea() {
     const larg = parseFloat(document.getElementById('terr_larg').value) || 0;
     const comp = parseFloat(document.getElementById('terr_comp').value) || 0;
@@ -52,7 +50,7 @@ function atualizarEstoqueUI() {
         div.style.borderLeft = `5px solid ${i.cor}`;
         div.innerHTML = `<b>${i.tipo.toUpperCase()}</b> (Andar ${i.andar})`;
         div.onclick = () => { 
-            const n = {...i, x: 100, y: 100, rot: 0, id: Date.now()};
+            const n = {...i, x: 150, y: 150, rot: 0, id: Date.now()};
             itens.push(n); selecionado = n; desenhar(); 
         };
         container.appendChild(div);
@@ -75,12 +73,6 @@ function desenharItem(o) {
     ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
     ctx.strokeRect(-w/2, -h/2, w, h);
 
-    if(o.tipo === 'suite_master') {
-        ctx.strokeStyle = "#333"; ctx.setLineDash([4, 4]);
-        ctx.strokeRect(-w/2 + 5, -h/2 + 5, w/3, h/2.5); 
-        ctx.setLineDash([]); ctx.strokeRect(w/2 - w/3, -h/2, w/3, h/3); 
-    }
-
     ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
     ctx.fillText(`${o.tipo.toUpperCase()} (${o.w.toFixed(1)}x${o.h.toFixed(1)}m)`, 0, 5);
 
@@ -94,14 +86,33 @@ function desenharItem(o) {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade (Grid)
-    ctx.strokeStyle = "#eee"; ctx.lineWidth = 0.5; ctx.setLineDash([]);
+    // Grade de fundo
+    ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 0.5; ctx.setLineDash([]);
     for(let i=0; i<canvas.width; i+=escalaPx) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
     for(let j=0; j<canvas.height; j+=escalaPx) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
+    // --- NOVO: DESENHO DO LIMITE DO TERRENO NO PAPEL ---
+    const tLarg = parseFloat(document.getElementById('terr_larg').value) || 0;
+    const tComp = parseFloat(document.getElementById('terr_comp').value) || 0;
+    
+    if (tLarg > 0 && tComp > 0) {
+        ctx.save();
+        ctx.strokeStyle = "#ff0000"; // Cor vermelha para o limite
+        ctx.lineWidth = 3;
+        ctx.setLineDash([10, 5]); // Linha tracejada
+        // Desenha o terreno começando em uma margem de segurança (ex: 50px)
+        ctx.strokeRect(50, 50, tLarg * escalaPx, tComp * escalaPx);
+        
+        ctx.fillStyle = "#ff0000";
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(`LIMITE DO TERRENO (${tLarg}m x ${tComp}m)`, 60, 40);
+        ctx.restore();
+    }
+    // ---------------------------------------------------
+
     itens.forEach(desenharItem);
     
-    // SELO DE INFORMAÇÕES (CANTO INFERIOR DIREITO)
+    // SELO DE INFORMAÇÕES
     const sX = canvas.width - 440, sY = canvas.height - 240;
     ctx.fillStyle = "#fff"; ctx.fillRect(sX, sY, 400, 200);
     ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2; ctx.setLineDash([]);
@@ -119,32 +130,25 @@ function desenhar() {
     const comp = document.getElementById('terr_comp').value || "0";
     const areaT = document.getElementById('area_terreno').value || "0";
     ctx.fillText(`TERRENO: ${larg}m x ${comp}m (${areaT} m²)`, sX + 20, sY + 145);
-    
     ctx.fillText("DATA: " + new Date().toLocaleDateString(), sX + 20, sY + 180);
 }
 
-// Escuta de eventos para seleção e arrasto
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
     const escalaRealX = r.width / canvas.width;
     const escalaRealY = r.height / canvas.height;
-
     const mx = (e.clientX - r.left) / escalaRealX;
     const my = (e.clientY - r.top) / escalaRealY;
-    
     const andarVisivel = document.getElementById('sel_andar_view').value.toString();
     
     selecionado = null;
     for(let i = itens.length - 1; i >= 0; i--) {
         let o = itens[i];
         if(o.andar.toString() === andarVisivel) {
-            const wPx = o.w * escalaPx;
-            const hPx = o.h * escalaPx;
+            const wPx = o.w * escalaPx, hPx = o.h * escalaPx;
             if(mx >= o.x && mx <= o.x + wPx && my >= o.y && my <= o.y + hPx) {
-                selecionado = o; 
-                arrastando = true;
-                mouseOffset.x = mx - o.x; 
-                mouseOffset.y = my - o.y;
+                selecionado = o; arrastando = true;
+                mouseOffset.x = mx - o.x; mouseOffset.y = my - o.y;
                 break; 
             }
         }
@@ -167,19 +171,16 @@ window.addEventListener('mouseup', () => arrastando = false);
 
 window.addEventListener('keydown', (e) => {
     if(!selecionado) return;
-    
     const step = 0.1;
     if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 90) % 360;
     if(e.key === 'Delete' || e.key === 'Backspace') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
-    
-    // Setas de redimensionamento (Invertidas conforme solicitado)
     if(e.key === 'ArrowUp') selecionado.h += step;
     if(e.key === 'ArrowDown') selecionado.h = Math.max(0.1, selecionado.h - step);
     if(e.key === 'ArrowRight') selecionado.w += step;
     if(e.key === 'ArrowLeft') selecionado.w = Math.max(0.1, selecionado.w - step);
-
     desenhar();
 });
 
 function limparTudo() { if(confirm("Reiniciar projeto?")) { itens = []; estoque = []; atualizarEstoqueUI(); desenhar(); } }
 desenhar();
+ 
