@@ -2,175 +2,257 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoPlanta Designer - MAINFOWEB</title>
+    <title>Projeto de Edificação</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; --red: #dc3545; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        #sidebar { width: 340px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
-        #canvas-container { flex: 1; background: #333; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px; }
-        #inventory { width: 220px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
+        
+        /* Painel Lateral */
+        #sidebar { width: 350px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; z-index: 10; }
+        
+        /* Área do Desenho com Scroll e Centralização */
+        #canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; align-items: flex-start; padding: 60px; position: relative; }
+        
+        /* Estoque de Itens */
+        #inventory { width: 240px; background: #181818; padding: 15px; border-left: 1px solid #333; overflow-y: auto; }
+        
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 8px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
-        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
-        .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
-        .btn-export { background: var(--orange); color: #000; cursor: pointer; font-weight: bold; }
-        canvas { background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
+        .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; transition: 0.2s; }
+        .item-pronto:hover { border-color: var(--blue); background: #404040; }
+        
+        input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; font-size: 13px; }
+        .btn-add { background: var(--green); cursor: pointer; font-weight: bold; }
+        .btn-reset { background: var(--red); cursor: pointer; font-weight: bold; margin-top: 10px; }
+        
+        /* Folha A4 e Zoom */
+        canvas { background: white; box-shadow: 0 20px 60px rgba(0,0,0,0.8); cursor: crosshair; transform-origin: top center; transition: transform 0.1s ease-out; }
+        
+        .zoom-controls { position: fixed; bottom: 20px; right: 270px; background: rgba(0,0,0,0.9); padding: 10px; border-radius: 30px; display: flex; gap: 10px; z-index: 100; border: 1px solid #444; }
+        .zoom-btn { width: 45px; height: 45px; border-radius: 50%; border: 1px solid var(--blue); background: #111; color: var(--blue); cursor: pointer; font-weight: bold; font-size: 20px; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="margin:0 0 15px 0">AutoPlanta <span style="color:var(--blue)">Color</span></h2>
-    
+    <h2 class="logo">Projeto de <span>Edificações</span></h2>
     <div class="section">
-        <label><b>1. ESCOLHA A COR DO ITEM</b></label>
-        <input type="color" id="cor_escolhida" value="#f4e4bc">
+        <label><b>🎨 1. COR DO PRÓXIMO ITEM</b></label>
+        <input type="color" id="cor_escolhida" value="#fcfcfc">
     </div>
 
     <div class="section">
-        <label><b>2. SELECIONE O COMPONENTE</b></label>
+        <label><b>📐 2. SELECIONAR COMPONENTE</b></label>
         <select id="sel_tipo">
-            <optgroup label="Cômodos (Preenchimento)">
+            <optgroup label="Modelos Completos">
+                <option value="suite_master">Suíte Master (Banheiro+Closet)</option>
+                <option value="suite_simples">Suíte (C/ Banheiro)</option>
+                <option value="kitnet">Kitnet (C/ Banheiro)</option>
+            </optgroup>
+            <optgroup label="Cômodos Avulsos">
                 <option value="quarto">Quarto</option>
-                <option value="sala">Sala / Living</option>
+                <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro</option>
-                <option value="suite_master">Suíte Master (C/ Closet)</option>
+                <option value="banheiro">Banheiro Social</option>
+                <option value="garagem">Garagem</option>
+                <option value="piscina">Piscina</option>
+                <option value="area_servico">Área de Serviço</option>
             </optgroup>
-            <optgroup label="Móveis (image_1c455d.jpg)">
+            <optgroup label="Circulação e Acessos">
+                <option value="escada_l">Escada em L</option>
+                <option value="escada_reta">Escada Reta</option>
+                <option value="porta">Porta (0.80m)</option>
+                <option value="porta_dupla">Porta Dupla (1.60m)</option>
+                <option value="portao_garagem">Portão Garagem (3.5m)</option>
+                <option value="janela">Janela (1.5m)</option>
+            </optgroup>
+            <optgroup label="Mobiliário (Opcional)">
                 <option value="cama">Cama Casal</option>
-                <option value="sofa">Sofá de Canto</option>
-                <option value="mesa">Mesa de Trabalho</option>
-                <option value="banheira">Banheira / Ofurô</option>
-            </optgroup>
-            <optgroup label="Esquadrias (Sempre à Frente)">
-                <option value="porta">Porta de Giro</option>
-                <option value="janela">Janela de Correr</option>
+                <option value="sofa">Sofá</option>
+                <option value="mesa">Mesa de Jantar</option>
             </optgroup>
         </select>
-        <button class="btn-add" onclick="adicionarAoEstoque()">COLOCAR NO ESTOQUE</button>
+        <button class="btn-add" onclick="adicionarAoEstoque()">MANDAR PARA ESTOQUE</button>
     </div>
 
     <div class="section">
-        <label><b>GERENCIAMENTO</b></label>
-        <button onclick="limparTudo()" style="background:var(--red)">LIMPAR PROJETO</button>
-        <button class="btn-export" onclick="alert('Relatório gerado!')" style="margin-top:10px">GERAR PDF</button>
+        <label><b>📄 3. IDENTIFICAÇÃO (SELO)</b></label>
+        <input type="text" id="cli_nome" placeholder="Nome do Cliente" oninput="desenhar()">
+        <input type="text" id="resp_tec" placeholder="Técnico Responsável" oninput="desenhar()">
     </div>
+
+    <button class="btn-reset" onclick="limparTudo()">RECOMEÇAR TUDO</button>
+    <p style="font-size: 10px; color: #888; margin-top: 15px;">Dicas: 'R' para girar o item selecionado. 'DEL' para excluir.</p>
+</div>
+
+<div class="zoom-controls">
+    <button class="zoom-btn" onclick="ajustarZoom(0.1)">+</button>
+    <button class="zoom-btn" onclick="ajustarZoom(-0.1)">-</button>
 </div>
 
 <div id="canvas-container">
-    <canvas id="mainCanvas"></canvas>
+    <canvas id="mainCanvas" tabindex="1"></canvas>
 </div>
 
 <div id="inventory">
-    <h3>📦 Itens Prontos</h3>
+    <h3>📦 Estoque</h3>
     <div id="lista-estoque"></div>
 </div>
 
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const escala = 25; 
-    canvas.width = 800; canvas.height = 600;
+    
+    // Configuração Folha A4 (Proporcional a pixels)
+    const escala = 30; // 1 metro = 30 pixels
+    canvas.width = 1122; // Largura A4
+    canvas.height = 1587; // Altura A4
     
     let itens = [];
     let estoque = [];
     let selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
+    let zoom = 0.6; // Zoom inicial para caber na tela
+
+    // Inicialização do Zoom
+    canvas.style.transform = `scale(${zoom})`;
+
+    function ajustarZoom(delta) {
+        zoom = Math.min(Math.max(0.3, zoom + delta), 2.0);
+        canvas.style.transform = `scale(${zoom})`;
+    }
 
     function adicionarAoEstoque() {
         const tipo = document.getElementById('sel_tipo').value;
         const cor = document.getElementById('cor_escolhida').value;
         let w = 4, h = 4;
 
-        // Dimensões base
+        // Definição de tamanhos padrão (metros)
+        if(tipo === 'suite_master') { w = 6; h = 8; }
+        if(tipo === 'kitnet') { w = 5; h = 6; }
         if(tipo === 'banheiro') { w = 2; h = 3; }
-        if(tipo === 'cama') { w = 1.8; h = 2; }
-        if(tipo === 'sofa') { w = 2.5; h = 1.5; }
-        if(tipo === 'porta' || tipo === 'janela') { w = 1; h = 0.2; }
+        if(tipo === 'escada_l') { w = 2.5; h = 2.5; }
+        if(tipo === 'portao_garagem') { w = 3.5; h = 0.25; }
+        if(tipo === 'porta') { w = 0.8; h = 0.2; }
+        if(tipo === 'janela') { w = 1.5; h = 0.2; }
+        if(tipo === 'piscina') { w = 4; h = 7; }
 
         estoque.push({ id: Date.now(), tipo, w, h, cor });
-        atualizarUI();
+        atualizarEstoqueUI();
     }
 
-    function atualizarUI() {
-        const list = document.getElementById('lista-estoque');
-        list.innerHTML = '';
+    function atualizarEstoqueUI() {
+        const container = document.getElementById('lista-estoque');
+        container.innerHTML = '';
         estoque.forEach(i => {
-            const d = document.createElement('div');
-            d.className = 'item-pronto';
-            d.style.borderLeft = `4px solid ${i.cor}`;
-            d.innerHTML = `${i.tipo.toUpperCase()}`;
-            d.onclick = () => { itens.push({...i, x: 50, y: 50, rot: 0}); desenhar(); };
-            list.appendChild(d);
+            const div = document.createElement('div');
+            div.className = 'item-pronto';
+            div.style.borderLeft = `5px solid ${i.cor}`;
+            div.innerHTML = `<b>${i.tipo.toUpperCase().replace('_',' ')}</b><br>${i.w}m x ${i.h}m`;
+            div.onclick = () => { 
+                itens.push({...i, x: 200, y: 200, rot: 0, id: Date.now()}); 
+                desenhar(); 
+            };
+            container.appendChild(div);
         });
     }
 
-    function desenharGrid() {
-        ctx.strokeStyle = "#e0e0e0"; ctx.lineWidth = 0.5;
-        for(let x=0; x<canvas.width; x+=escala) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
-        for(let y=0; y<canvas.height; y+=escala) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+    function desenharSelo() {
+        const sW = 400, sH = 200;
+        const x = canvas.width - sW - 50, y = canvas.height - sH - 50;
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(x, y, sW, sH);
+        ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
+        ctx.fillText("MAINFOWEB - ENGENHARIA DIGITAL", x + 20, y + 40);
+        ctx.font = "14px Arial";
+        ctx.fillText("CLIENTE: " + (document.getElementById('cli_nome').value || "Não informado"), x + 20, y + 80);
+        ctx.fillText("RESPONSÁVEL: " + (document.getElementById('resp_tec').value || "Márcio"), x + 20, y + 110);
+        
+        let totalArea = 0;
+        itens.forEach(i => { if(!i.tipo.includes('porta') && !i.tipo.includes('janela')) totalArea += (i.w * i.h); });
+        ctx.font = "bold 14px Arial";
+        ctx.fillText("ÁREA TOTAL ESTIMADA: " + totalArea.toFixed(2) + " m²", x + 20, y + 170);
     }
 
     function desenharItem(o) {
-        const w = o.w * escala; const h = o.h * escala;
+        const w = o.w * escala, h = o.h * escala;
         ctx.save();
         ctx.translate(o.x + w/2, o.y + h/2);
         ctx.rotate(o.rot * Math.PI / 180);
 
-        // Se for cômodo (fundo)
-        if(['quarto','sala','cozinha','banheiro','suite_master'].includes(o.tipo)) {
+        // Ordem de desenho por tipo
+        if(!o.tipo.includes('porta') && !o.tipo.includes('janela') && !['cama','sofa','mesa'].includes(o.tipo)) {
+            // Cômodos principais
             ctx.fillStyle = o.cor;
             ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#444"; ctx.lineWidth = 3;
-            ctx.strokeRect(-w/2, -h/2, w, h);
-            
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.strokeRect(-w/2, -h/2, w, h);
+
+            // Detalhes Suíte Master (Closet pontilhado e Banheiro linha cheia)
             if(o.tipo === 'suite_master') {
-                ctx.setLineDash([5,5]);
-                ctx.strokeRect(-w/2 + 5, -h/2 + 5, w/2, h/3); // Representação de closet
+                // Banheiro (Linha cheia)
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-w/2, h/2 - (2.5*escala), (2.5*escala), (2.5*escala));
+                // Closet (Pontilhado conforme pedido)
+                ctx.setLineDash([8, 6]);
+                ctx.strokeRect(w/2 - (2.5*escala), h/2 - (2.5*escala), (2.5*escala), (2.5*escala));
                 ctx.setLineDash([]);
             }
+
+            // Escada em L
+            if(o.tipo === 'escada_l') {
+                ctx.beginPath(); ctx.moveTo(-w/2, -h/2); ctx.lineTo(w/2, -h/2); ctx.lineTo(w/2, h/2);
+                ctx.lineTo(0, h/2); ctx.lineTo(0, 0); ctx.lineTo(-w/2, 0); ctx.closePath(); ctx.stroke();
+                for(let i=1; i<5; i++) {
+                    ctx.moveTo(-w/2, -h/2+(i*10)); ctx.lineTo(w/2, -h/2+(i*10));
+                    ctx.moveTo(w/2-(i*10), -h/2); ctx.lineTo(w/2-(i*10), h/2);
+                }
+                ctx.stroke();
+            }
         } 
-        // Se for Móvel
-        else if(['cama','sofa','mesa','banheira'].includes(o.tipo)) {
-            ctx.fillStyle = "#fff";
-            ctx.strokeStyle = "#888"; ctx.lineWidth = 1;
-            ctx.fillRect(-w/2 + 2, -h/2 + 2, w-4, h-4);
-            ctx.strokeRect(-w/2 + 2, -h/2 + 2, w-4, h-4);
-            ctx.fillStyle = "#444"; ctx.font = "8px Arial";
-            ctx.fillText(o.tipo, -w/2 + 5, 0);
-        }
-        // Se for Esquadria (Porta/Janela)
-        else {
-            ctx.fillStyle = o.tipo === 'porta' ? "#8b4513" : "#add8e6";
-            ctx.fillRect(-w/2, -h/2, w, h);
-            if(o.tipo === 'porta') {
+        // Portas e Janelas (Esquadrias)
+        else if(o.tipo.includes('porta') || o.tipo.includes('portao')) {
+            ctx.fillStyle = "#8b4513"; ctx.fillRect(-w/2, -h/2, w, h);
+            if(o.tipo !== 'portao_garagem') {
                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
             }
+        } else if(o.tipo === 'janela') {
+            ctx.fillStyle = "#add8e6"; ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.strokeRect(-w/2, -h/2, w, h);
+            ctx.beginPath(); ctx.moveTo(-w/2, 0); ctx.lineTo(w/2, 0); ctx.stroke();
+        }
+        // Móveis
+        else {
+            ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.strokeStyle = "#999"; ctx.lineWidth = 1; ctx.strokeRect(-w/2, -h/2, w, h);
         }
 
-        if(o === selecionado) { ctx.strokeStyle = var(--blue); ctx.lineWidth = 2; ctx.strokeRect(-w/2-2, -h/2-2, w+4, h+4); }
+        // Nome do cômodo
+        ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial";
+        ctx.fillText(o.tipo.split('_')[0].toUpperCase(), -w/2 + 5, -h/2 + 15);
+
+        // Destaque de Seleção
+        if(o === selecionado) { ctx.strokeStyle = var(--blue); ctx.lineWidth = 3; ctx.strokeRect(-w/2-5, -h/2-5, w+10, h+10); }
         ctx.restore();
     }
 
     function desenhar() {
-        ctx.clearRect(0,0,canvas.width, canvas.height);
-        desenharGrid();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // ORDEM DE CAMADAS: 1. Cômodos, 2. Móveis, 3. Portas/Janelas
+        // Z-Index: 1.Cômodos -> 2.Móveis -> 3.Esquadrias
         const ordem = (t) => {
-            if(['quarto','sala','cozinha','banheiro','suite_master'].includes(t)) return 1;
-            if(['cama','sofa','mesa','banheira'].includes(t)) return 2;
-            return 3;
+            if(t.includes('porta') || t.includes('janela') || t.includes('portao')) return 3;
+            if(['cama','sofa','mesa'].includes(t)) return 2;
+            return 1;
         };
-
+        
         itens.sort((a,b) => ordem(a.tipo) - ordem(b.tipo)).forEach(desenharItem);
+        desenharSelo();
     }
 
-    function limparTudo() { if(confirm("Limpar tudo?")) { itens = []; desenhar(); } }
+    function limparTudo() { if(confirm("Apagar planta atual?")) { itens = []; desenhar(); } }
 
+    // Eventos de Mouse com Correção de Zoom
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect();
-        const mx = e.clientX - r.left; const my = e.clientY - r.top;
+        const mx = (e.clientX - r.left) / zoom;
+        const my = (e.clientY - r.top) / zoom;
         selecionado = null;
         for(let i=itens.length-1; i>=0; i--) {
             let o = itens[i];
@@ -185,13 +267,15 @@
     window.onmousemove = (e) => {
         if(arrastando && selecionado) {
             const r = canvas.getBoundingClientRect();
-            selecionado.x = (e.clientX - r.left) - offset.x;
-            selecionado.y = (e.clientY - r.top) - offset.y;
+            selecionado.x = ((e.clientX - r.left) / zoom) - offset.x;
+            selecionado.y = ((e.clientY - r.top) / zoom) - offset.y;
             desenhar();
         }
     };
 
     window.onmouseup = () => arrastando = false;
+    
+    // Atalhos de Teclado
     window.onkeydown = (e) => {
         if(!selecionado) return;
         if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 45) % 360;
