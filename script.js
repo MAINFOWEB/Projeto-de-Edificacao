@@ -19,13 +19,11 @@ const tamanhosBase = {
     'janela_dupla': {w: 2.5, h: 0.15}, 'janela_basculante': {w: 0.6, h: 0.15}
 };
 
-function atualizaPreviewCor() {
-    document.getElementById('preview-cor').style.backgroundColor = document.getElementById('cor_escolhida').value;
-}
-
-function ajustarZoom(delta) {
+// CORREÇÃO: blur() remove o foco do botão para não interferir no teclado
+function ajustarZoom(delta, btn) {
     zoom = Math.min(Math.max(0.1, zoom + delta), 1.5);
     canvas.style.transform = `scale(${zoom})`;
+    if (btn) btn.blur(); 
 }
 
 function adicionarAoEstoque() {
@@ -55,7 +53,7 @@ function atualizarEstoqueUI() {
 
 function desenharItem(o) {
     const andarVisivel = document.getElementById('sel_andar_view').value;
-    if (o.andar !== andarVisivel) return; // Filtro de andar
+    if (o.andar !== andarVisivel) return;
 
     const w = o.w * escalaPx, h = o.h * escalaPx;
     ctx.save();
@@ -71,8 +69,8 @@ function desenharItem(o) {
 
     if(o.tipo === 'suite_master') {
         ctx.strokeStyle = "#333"; ctx.setLineDash([4, 4]);
-        ctx.strokeRect(-w/2 + 5, -h/2 + 5, w/3, h/2.5); // Closet
-        ctx.setLineDash([]); ctx.strokeRect(w/2 - w/3, -h/2, w/3, h/3); // Banheiro
+        ctx.strokeRect(-w/2 + 5, -h/2 + 5, w/3, h/2.5); 
+        ctx.setLineDash([]); ctx.strokeRect(w/2 - w/3, -h/2, w/3, h/3); 
     }
 
     ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
@@ -95,7 +93,7 @@ function desenhar() {
     
     const sX = canvas.width - 440, sY = canvas.height - 240;
     ctx.fillStyle = "#fff"; ctx.fillRect(sX, sY, 400, 200);
-    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2; ctx.setLineDash([]);
+    ctx.strokeStyle = "#00d2ff"; ctx.lineWidth = 2;
     ctx.strokeRect(sX, sY, 400, 200);
     
     ctx.fillStyle = "#333"; ctx.font = "12px Segoe UI"; ctx.textAlign = "left";
@@ -142,11 +140,11 @@ window.addEventListener('mouseup', () => arrastando = false);
 window.addEventListener('keydown', (e) => {
     if(!selecionado) return;
     
-    const step = 0.1; // 10cm por clique
+    const step = 0.1;
     if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 90) % 360;
     if(e.key === 'Delete' || e.key === 'Backspace') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
     
-    // REDIMENSIONAMENTO PELAS SETAS
+    // CORREÇÃO: Lógica invertida conforme pedido (Cima aumenta, Baixo diminui)
     if(e.key === 'ArrowUp') selecionado.h += step;
     if(e.key === 'ArrowDown') selecionado.h = Math.max(0.1, selecionado.h - step);
     if(e.key === 'ArrowRight') selecionado.w += step;
