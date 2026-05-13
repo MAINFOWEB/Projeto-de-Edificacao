@@ -8,7 +8,7 @@
 <body>
 
 <div id="sidebar">
-    <h3 class="logo">Projeto de Edificação</h3>
+    <h3 class="titulo-topo">Projeto de <span class="azul">Edificação</span></h3>
     
     <div class="section">
         <label>🎨 COR DO CÔMODO</label>
@@ -29,13 +29,16 @@
     <div class="section">
         <label>📐 COMPONENTE</label>
         <select id="sel_tipo">
-            <optgroup label="Cômodos e Áreas">
+            <optgroup label="Suítes e Kitnet (Com Banheiro)">
+                <option value="suite_master">Suíte Master + Closet</option>
+                <option value="suite_comum">Suíte Comum</option>
+                <option value="kitnet">Kitnet</option>
+            </optgroup>
+            <optgroup label="Cômodos Padrão">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro</option>
-                <option value="suite_master">Suíte Master</option>
-                <option value="kitnet">Kitnet</option>
+                <option value="banheiro">Banheiro Social</option>
                 <option value="lavanderia">Lavanderia</option>
                 <option value="corredor">Corredor</option>
                 <option value="garagem">Garagem</option>
@@ -46,29 +49,24 @@
                 <option value="escada_l">Escada em L</option>
             </optgroup>
             <optgroup label="Mobiliário">
-                <option value="cama_casal">Cama Casal</option>
-                <option value="cama_solteiro">Cama Solteiro</option>
-                <option value="mesa_4">Mesa (4 Lugares)</option>
-                <option value="mesa_6">Mesa (6 Lugares)</option>
-                <option value="mesa_8">Mesa (8 Lugares)</option>
-                <option value="sofa_2">Sofá (2 Lugares)</option>
-                <option value="sofa_3">Sofá (3 Lugares)</option>
+                <option value="mesa_4">Mesa (4 Lug)</option>
+                <option value="mesa_8">Mesa (8 Lug)</option>
+                <option value="sofa_2">Sofá (2 Lug)</option>
             </optgroup>
-            <optgroup label="Acessos (Portas/Janelas)">
-                <option value="porta">Porta Simples (0.80m)</option>
-                <option value="porta_dupla">Porta Dupla (1.60m)</option>
-                <option value="janela">Janela Simples (1.50m)</option>
-                <option value="janela_dupla">Janela Dupla (2.00m)</option>
-                <option value="janela_basculante">Janela Basculante (0.60m)</option>
+            <optgroup label="Acessos">
+                <option value="porta_dupla">Porta Dupla</option>
+                <option value="janela_dupla">Janela Dupla</option>
+                <option value="janela_basculante">Janela Basculante</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">MANDAR PARA ESTOQUE</button>
     </div>
 
     <div class="section">
-        <label>📄 DADOS DO PROJETO</label>
+        <label>📄 DADOS TÉCNICOS</label>
         <input type="text" id="cli_nome" placeholder="Nome do Cliente" oninput="desenhar()">
         <input type="text" id="resp_tec" placeholder="Responsável Técnico" oninput="desenhar()">
+        <input type="number" id="area_terreno" placeholder="Área do Terreno (m²)" oninput="desenhar()">
     </div>
 
     <button class="btn-print" onclick="window.print()">🖨️ GERAR PDF / IMPRIMIR</button>
@@ -87,7 +85,7 @@
 <div id="inventory">
     <h4>📦 ESTOQUE</h4>
     <div id="lista-estoque"></div>
-    <div class="instrucoes">
+    <div class="info-uso">
         <b>R</b>: Girar | <b>DEL</b>: Apagar<br>
         Clique e arraste para mover.
     </div>
