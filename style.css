@@ -2,29 +2,32 @@
 body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
 
 #sidebar { width: 300px; background: var(--panel); padding: 20px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
-.logo { color: var(--blue); text-align: center; font-size: 1.2rem; border-bottom: 2px solid var(--blue); padding-bottom: 10px; }
+.logo { color: var(--blue); text-align: center; border-bottom: 2px solid var(--blue); padding-bottom: 10px; margin-top: 0; }
 
 .section { background: #252525; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid var(--blue); }
-label { display: block; font-size: 11px; margin-bottom: 5px; color: #888; }
+label { display: block; font-size: 11px; margin-bottom: 5px; color: #888; font-weight: bold; }
 
 .color-picker-container { display: flex; align-items: center; gap: 10px; }
-#preview-cor { width: 100%; height: 30px; border-radius: 4px; border: 1px solid #444; }
+#preview-cor { flex: 1; height: 30px; border-radius: 4px; border: 1px solid #444; background: #e0f7fa; }
 
-input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; font-size: 13px; outline: none; }
-.btn-add { background: var(--green); cursor: pointer; font-weight: bold; }
+input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; font-size: 13px; outline: none; box-sizing: border-box; }
+.btn-add { background: var(--green); cursor: pointer; font-weight: bold; transition: 0.2s; }
+.btn-add:hover { background: #218838; }
 .btn-print { background: var(--blue); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
-.btn-reset { background: var(--red); cursor: pointer; font-weight: bold; font-size: 11px; }
+.btn-reset { background: var(--red); cursor: pointer; font-weight: bold; margin-top: 10px; }
 
-#canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; padding: 40px; }
-#inventory { width: 220px; background: #181818; padding: 15px; border-left: 1px solid #333; }
-.item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 12px; }
-.dica { font-size: 10px; color: #666; margin-top: 20px; text-align: center; }
+#canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; padding: 40px; cursor: crosshair; }
+#inventory { width: 240px; background: #181818; padding: 15px; border-left: 1px solid #333; overflow-y: auto; }
+.item-pronto { background: #2a2a2a; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 12px; transition: 0.2s; }
+.item-pronto:hover { border-color: var(--blue); background: #333; }
+.instrucoes { font-size: 10px; color: #666; margin-top: 20px; border-top: 1px solid #333; padding-top: 10px; line-height: 1.5; }
 
-canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform-origin: top center; }
-.zoom-controls { position: fixed; bottom: 25px; left: 330px; display: flex; gap: 10px; }
-.zoom-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--blue); background: #000; color: var(--blue); cursor: pointer; font-size: 20px; }
+canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform-origin: top center; cursor: default; }
+.zoom-controls { position: fixed; bottom: 25px; left: 330px; display: flex; gap: 10px; z-index: 100; }
+.zoom-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--blue); background: #000; color: var(--blue); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
 
 @media print {
     #sidebar, #inventory, .zoom-controls { display: none !important; }
-    canvas { transform: scale(1) !important; box-shadow: none; }
+    canvas { transform: scale(1) !important; box-shadow: none; border: none; }
+    body { background: white; }
 }
