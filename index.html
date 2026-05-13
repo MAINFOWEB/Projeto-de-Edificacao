@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>AutoPlanta Pro - MAINFOWEB</title>
+    <title>Projeto de Edificação</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; --red: #dc3545; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
@@ -10,7 +10,8 @@
         #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px; }
         #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 8px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
+        .item-pronto { background: #333; padding: 8px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; transition: 0.2s; }
+        .item-pronto:hover { border-color: var(--blue); background: #444; }
         input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
         .btn-reset { background: var(--red); color: white; cursor: pointer; font-weight: bold; margin-top: 5px; }
@@ -18,13 +19,13 @@
         .active-pavi { background: var(--blue) !important; color: #000 !important; font-weight: bold; }
         .btn-export { background: var(--orange); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
         canvas { background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.6); outline: none; }
-        .manual { font-size: 11px; color: #aaa; padding: 10px; background: #1a1a1a; border-radius: 4px; margin-top: 10px; }
+        .manual { font-size: 11px; color: #aaa; padding: 10px; background: #1a1a1a; border-radius: 4px; margin-top: 10px; line-height: 1.4; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="margin-top:0">AutoPlanta <span style="color:var(--blue)">Pro</span></h2>
+    <h2 style="margin-top:0">Projeto de <span style="color:var(--blue)">Edificação</span></h2>
     
     <div class="section">
         <label><b>PAVIMENTO ATUAL</b></label>
@@ -35,50 +36,54 @@
     </div>
 
     <div class="section">
-        <label><b>TERRENO (m)</b></label>
+        <label><b>DADOS DO SELO (ABNT)</b></label>
+        <input type="text" id="cli_nome" placeholder="Proprietário" oninput="desenhar()">
+        <input type="text" id="resp_tecnico" placeholder="Responsável Técnico" oninput="desenhar()">
         <div style="display:flex; gap:5px;">
-            <input type="number" id="terr_w" value="20" oninput="desenhar()">
-            <input type="number" id="terr_h" value="50" oninput="desenhar()">
+            <input type="number" id="terr_w" title="Largura Terreno" value="20" oninput="desenhar()">
+            <input type="number" id="terr_h" title="Comprimento Terreno" value="50" oninput="desenhar()">
         </div>
     </div>
 
     <div class="section">
-        <label><b>DADOS DO SELO</b></label>
-        <input type="text" id="cli_nome" placeholder="Proprietário" oninput="desenhar()">
-        <input type="text" id="resp_tecnico" placeholder="Responsável Técnico" oninput="desenhar()">
-    </div>
-
-    <div class="section">
-        <label><b>ADICIONAR ITEM</b></label>
+        <label><b>ADICIONAR COMPONENTE</b></label>
         <select id="sel_tipo">
-            <optgroup label="Modelos Prontos">
-                <option value="kitnet">Kitnet (Integrada)</option>
+            <optgroup label="Modelos Completos">
+                <option value="kitnet_completa">Kitnet (C/ Banheiro)</option>
+                <option value="suite_simples">Suíte (C/ Banheiro)</option>
+                <option value="suite_master">Suíte Master (Banheiro+Closet)</option>
+            </optgroup>
+            <optgroup label="Circulação">
+                <option value="escada_reta">Escada Reta</option>
+                <option value="escada_l">Escada em L</option>
             </optgroup>
             <optgroup label="Cômodos">
                 <option value="quarto">Quarto</option>
-                <option value="sala">Sala</option>
+                <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro</option>
-                <option value="lavanderia">Lavanderia</option>
+                <option value="banheiro">Banheiro Social</option>
                 <option value="garagem">Garagem</option>
             </optgroup>
-            <optgroup label="Acessos/Janelas">
-                <option value="p_comum">Porta Comum</option>
-                <option value="p_dupla">Porta Dupla</option>
+            <optgroup label="Esquadrias">
+                <option value="p_comum">Porta Comum (0.80m)</option>
+                <option value="p_dupla">Porta Dupla (1.60m)</option>
                 <option value="p_garagem">Portão Garagem</option>
                 <option value="j_simples">Janela Simples</option>
                 <option value="j_dupla">Janela Dupla</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">COLOCAR NO ESTOQUE</button>
-        <button class="btn-reset" onclick="resetarProjeto()">RESETAR PROJETO</button>
+        <button class="btn-reset" onclick="resetarProjeto()">LIMPAR TUDO (RESET)</button>
     </div>
 
     <div class="manual">
-        <b>R</b> rotaciona | <b>DEL</b> exclui | <b>Shift + Setas</b> ajusta área.
+        <b>Dicas Técnicas:</b><br>
+        • <b>R</b>: Rotacionar elemento.<br>
+        • <b>DEL</b>: Remover selecionado.<br>
+        • <b>Shift + Setas</b>: Ajuste fino de área.
     </div>
 
-    <button class="btn-export" onclick="exportarRelatorio()">📋 GERAR RELATÓRIO E PLANTA</button>
+    <button class="btn-export" onclick="exportarRelatorio()">📋 GERAR RELATÓRIO TÉCNICO</button>
 </div>
 
 <div id="canvas-container">
@@ -86,7 +91,7 @@
 </div>
 
 <div id="inventory">
-    <h3>📦 Estoque</h3>
+    <h3>📦 Estoque de Itens</h3>
     <div id="lista-estoque"></div>
 </div>
 
@@ -111,7 +116,7 @@
     }
 
     function resetarProjeto() {
-        if(confirm("Deseja apagar todo o projeto atual?")) {
+        if(confirm("ATENÇÃO: Isso apagará toda a planta e o estoque. Confirmar?")) {
             dados = { terreo: [], segundo: [] };
             estoque = [];
             atualizarEstoqueUI();
@@ -123,10 +128,19 @@
         const t = document.getElementById('sel_tipo').value;
         let w = 3.0, h = 4.0;
         
-        if(t === 'kitnet') { w = 5.0; h = 6.0; }
-        else if(t.includes('p_')) { w = t==='p_dupla'?1.6 : t==='p_garagem'?3.5 : 0.8; h = 0.2; }
-        else if(t.includes('j_')) { w = 1.5; h = 0.2; }
-        else if(t === 'banheiro') { w = 1.5; h = 2.5; }
+        switch(t) {
+            case 'kitnet_completa': w = 5.0; h = 7.0; break;
+            case 'suite_simples': w = 4.0; h = 5.5; break;
+            case 'suite_master': w = 5.0; h = 7.5; break;
+            case 'escada_reta': w = 1.0; h = 3.5; break;
+            case 'escada_l': w = 2.5; h = 2.5; break;
+            case 'banheiro': w = 1.5; h = 2.5; break;
+            case 'p_dupla': w = 1.6; h = 0.2; break;
+            case 'p_garagem': w = 3.5; h = 0.2; break;
+            case 'p_comum': w = 0.8; h = 0.2; break;
+            case 'j_simples': w = 1.2; h = 0.2; break;
+            case 'j_dupla': w = 2.0; h = 0.2; break;
+        }
         
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
@@ -138,7 +152,7 @@
         estoque.forEach(item => {
             const div = document.createElement('div');
             div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong> - ${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
+            div.innerHTML = `<strong>${item.tipo.replace('_',' ').toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
             div.onclick = () => { 
                 dados[andarAtual].push({...item, x:100, y:150, rot:0, id: Date.now()}); 
                 desenhar(); 
@@ -147,18 +161,58 @@
         });
     }
 
+    function desenharComponente(obj) {
+        const w = obj.w * escala; const h = obj.h * escala;
+        ctx.save();
+        ctx.translate(obj.x + w/2, obj.y + h/2);
+        ctx.rotate(obj.rot * Math.PI / 180);
+
+        // Estética Profissional de Engenharia
+        if(!obj.tipo.includes('p_') && !obj.tipo.includes('j_')) {
+            ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.05)" : "white";
+            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+            ctx.strokeRect(-w/2, -h/2, w, h);
+
+            // Detalhes Internos para Modelos Completos
+            if(obj.tipo.includes('suite') || obj.tipo === 'kitnet_completa') {
+                ctx.setLineDash([2, 2]);
+                ctx.strokeRect(-w/2 + 5, h/2 - (2.5*escala), (1.5*escala), (2.5*escala)); // Representação do Banheiro
+                ctx.setLineDash([]);
+            }
+
+            // Desenho de Degraus para Escadas
+            if(obj.tipo.includes('escada')) {
+                ctx.strokeStyle = "#666"; ctx.lineWidth = 1;
+                for(let i = -h/2; i < h/2; i += escala/2) {
+                    ctx.beginPath(); ctx.moveTo(-w/2, i); ctx.lineTo(w/2, i); ctx.stroke();
+                }
+            }
+
+            ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
+            ctx.fillText(`${obj.tipo.replace('_',' ').toUpperCase()}`, -w/2 + 5, -h/2 + 15);
+            ctx.font = "8px Arial";
+            ctx.fillText(`${(obj.w*obj.h).toFixed(2)}m²`, -w/2 + 5, -h/2 + 28);
+        } else {
+            // Desenho de Portas e Janelas
+            ctx.fillStyle = obj.tipo.includes('p_') ? "#8b4513" : "#00d2ff";
+            ctx.fillRect(-w/2, -h/2, w, h);
+            if(obj.tipo.includes('p_')) { // Arco de abertura da porta
+                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+            }
+        }
+        ctx.restore();
+    }
+
     function desenharSeloABNT() {
         const sW = 250; const sH = 150;
         const x = folhaW - sW - 20; const y = folhaH - sH - 20;
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, sW, sH);
-        ctx.beginPath();
-        ctx.moveTo(x, y + 40); ctx.lineTo(x + sW, y + 40);
-        ctx.moveTo(x, y + 90); ctx.lineTo(x + sW, y + 90);
-        ctx.stroke();
-        ctx.fillStyle = "#000"; ctx.font = "bold 11px Arial";
+        ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(x, y, sW, sH);
+        ctx.beginPath(); ctx.moveTo(x, y + 40); ctx.lineTo(x + sW, y + 40);
+        ctx.moveTo(x, y + 90); ctx.lineTo(x + sW, y + 90); ctx.stroke();
+        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
         ctx.fillText("PROPRIETÁRIO: " + (document.getElementById('cli_nome').value || "---").toUpperCase(), x + 10, y + 25);
-        ctx.fillText("RESPONSÁVEL: " + (document.getElementById('resp_tecnico').value || "---").toUpperCase(), x + 10, y + 65);
+        ctx.fillText("RESP. TÉCNICO: " + (document.getElementById('resp_tecnico').value || "---").toUpperCase(), x + 10, y + 65);
         
         let areaT = 0; dados.terreo.forEach(o => { if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) areaT += (o.w*o.h); });
         let areaS = 0; dados.segundo.forEach(o => { if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) areaS += (o.w*o.h); });
@@ -167,70 +221,53 @@
         ctx.fillText(`ÁREA TÉRREO: ${areaT.toFixed(2)}m²`, x + 10, y + 105);
         ctx.fillText(`ÁREA 2º ANDAR: ${areaS.toFixed(2)}m²`, x + 10, y + 120);
         ctx.font = "bold 10px Arial";
-        ctx.fillText(`ÁREA TOTAL: ${(areaT + areaS).toFixed(2)}m²`, x + 10, y + 140);
+        ctx.fillText(`ÁREA TOTAL CONSTRUÍDA: ${(areaT + areaS).toFixed(2)}m²`, x + 10, y + 140);
     }
 
     function desenhar() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#f0f0f0"; ctx.font = "bold 30px Arial";
-        ctx.fillText(andarAtual === 'terreo' ? "PLANTA: TÉRREO" : "PLANTA: 2º ANDAR", 50, 60);
+        ctx.fillStyle = "#f0f0f0"; ctx.font = "bold 25px Arial";
+        ctx.fillText(andarAtual === 'terreo' ? "PLANTA BAIXA: TÉRREO" : "PLANTA BAIXA: 2º ANDAR", 40, 50);
 
         const tw = document.getElementById('terr_w').value * escala;
         const th = document.getElementById('terr_h').value * escala;
-        ctx.setLineDash([5, 5]); ctx.strokeStyle = "#ccc";
-        ctx.strokeRect(50, 100, tw, th);
+        ctx.setLineDash([5, 5]); ctx.strokeStyle = "#bbb";
+        ctx.strokeRect(40, 80, tw, th);
         ctx.setLineDash([]);
 
-        dados[andarAtual].forEach(obj => {
-            const w = obj.w * escala; const h = obj.h * escala;
-            ctx.save(); ctx.translate(obj.x + w/2, obj.y + h/2); ctx.rotate(obj.rot * Math.PI / 180);
-            
-            if(!obj.tipo.includes('p_') && !obj.tipo.includes('j_')) {
-                ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.1)" : "white";
-                ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
-                ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
-                ctx.fillText(`${obj.tipo.toUpperCase()} (${(obj.w*obj.h).toFixed(2)}m²)`, -w/2 + 5, 0);
-            } else {
-                ctx.fillStyle = obj.tipo.includes('p_') ? "#8b4513" : "#00d2ff";
-                ctx.fillRect(-w/2, -h/2, w, h);
-            }
-            ctx.restore();
-        });
+        dados[andarAtual].forEach(obj => desenharComponente(obj));
         desenharSeloABNT();
     }
 
     function exportarRelatorio() {
-        let relatorio = `<h1>Relatório Técnico de Edificação</h1>`;
-        relatorio += `<p><b>Proprietário:</b> ${document.getElementById('cli_nome').value || "Não informado"}</p>`;
+        let rel = `<h1>Memorial Técnico de Metragem</h1>`;
+        rel += `<p><b>Proprietário:</b> ${document.getElementById('cli_nome').value || "Não definido"}</p>`;
         
         ['terreo', 'segundo'].forEach(andar => {
-            relatorio += `<h3>Pavimento: ${andar.toUpperCase()}</h3><table border="1" style="width:100%; border-collapse: collapse;">
-                <tr><th>Cômodo</th><th>Medidas</th><th>Área Atual</th><th>Esquadrias</th></tr>`;
+            rel += `<h3>Pavimento: ${andar.toUpperCase()}</h3><table border="1" style="width:100%; border-collapse: collapse; font-size:12px;">
+                <tr style="background:#eee"><th>Componente</th><th>Dimensões (m)</th><th>Área (m²)</th><th>Esquadrias/Observações</th></tr>`;
             
-            let portas = 0, janelas = 0;
+            let p = 0, j = 0;
             dados[andar].forEach(o => {
                 if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) {
-                    relatorio += `<tr><td>${o.tipo}</td><td>${o.w.toFixed(2)}x${o.h.toFixed(2)}</td><td>${(o.w*o.h).toFixed(2)}m²</td><td>-</td></tr>`;
+                    rel += `<tr><td>${o.tipo.replace('_',' ').toUpperCase()}</td><td>${o.w.toFixed(2)} x ${o.h.toFixed(2)}</td><td>${(o.w*o.h).toFixed(2)}</td><td>-</td></tr>`;
                 } else {
-                    if(o.tipo.includes('p_')) portas++; else janelas++;
+                    if(o.tipo.includes('p_')) p++; else j++;
                 }
             });
-            relatorio += `<tr><td colspan="3"><b>Total de Acessos no Andar:</b></td><td>${portas} Portas / ${janelas} Janelas</td></tr></table>`;
+            rel += `<tr><td colspan="3"><b>Total de Acessos no Pavimento:</b></td><td><b>${p} Porta(s) / ${j} Janela(s)</b></td></tr></table>`;
         });
 
         const win = window.open("", "_blank");
-        win.document.write(`<html><head><title>Relatório Técnico</title></head><body style="font-family:Arial; padding:20px;">
-            ${relatorio}
-            <br><hr><br>
-            <h3>Planta Baixa</h3>
+        win.document.write(`<html><head><title>Relatório Profissional - MAINFOWEB</title></head><body style="font-family:Arial; padding:40px;">
+            ${rel} <br><hr><br> <h3>Planta Técnica</h3>
             <img src="${canvas.toDataURL()}" style="width:100%; border:1px solid #000;">
-            <script>window.print();<\/script>
+            <script>window.onload = function() { window.print(); }<\/script>
         </body></html>`);
     }
 
-    // Controles de Mouse e Teclado (Mantidos do anterior com ajustes de escala)
+    // Handlers de interação
     canvas.onmousedown = (e) => {
         const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width;
         const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
