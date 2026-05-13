@@ -13,6 +13,7 @@
         .item-pronto { background: #333; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
         input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-export { background: var(--blue); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
         canvas { background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.6); outline: none; }
         .manual { font-size: 11px; color: #aaa; line-height: 1.5; padding: 10px; background: #1a1a1a; border-radius: 4px; margin-top: 10px; }
     </style>
@@ -21,36 +22,60 @@
 
 <div id="sidebar">
     <h2>Projeto de <span style="color:var(--blue)">Edificação</span></h2>
+    
+    <div class="section">
+        <label><b>TERRENO (m)</b></label>
+        <div style="display:flex; gap:5px;">
+            <input type="number" id="terr_w" value="20" oninput="desenhar()">
+            <input type="number" id="terr_h" value="30" oninput="desenhar()">
+        </div>
+    </div>
+
     <div class="section">
         <label><b>DADOS</b></label>
-        <input type="text" id="prop_nome" placeholder="Proprietário" oninput="desenhar()">
-        <input type="text" id="proj_data" placeholder="Data (00/00/0000)" oninput="desenhar()">
+        <input type="text" id="cli_nome" placeholder="Proprietário" oninput="desenhar()">
+        <input type="text" id="resp_edit" placeholder="Responsável (Márcio)" oninput="desenhar()">
+        <input type="number" id="proj_ano" value="2026" oninput="desenhar()">
     </div>
+
     <div class="section">
-        <label><b>ESTRUTURA</b></label>
+        <label><b>ADICIONAR</b></label>
         <select id="sel_tipo">
-            <optgroup label="Cômodos">
+            <optgroup label="Cômodos/Áreas">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro</option>
                 <option value="lavanderia">Lavanderia</option>
+                <option value="garagem">Garagem</option>
+                <option value="piscina">Piscina</option>
             </optgroup>
-            <optgroup label="Acessos">
-                <option value="p_comum">Porta Comum</option>
-                <option value="p_social">Porta Social</option>
+            <optgroup label="Portas">
+                <option value="p_dupla">Porta Dupla (1.60m)</option>
+                <option value="p_social">Porta Social (1.20m)</option>
+                <option value="p_comum">Porta Comum (0.80m)</option>
+                <option value="p_garagem">Portão Garagem (3.50m)</option>
             </optgroup>
             <optgroup label="Janelas">
-                <option value="j_simples">Janela Simples</option>
-                <option value="j_dupla">Janela Dupla</option>
-                <option value="j_basculante">Janela Basculante</option>
+                <option value="j_dupla">Janela Dupla (1.50m)</option>
+                <option value="j_simples">Janela Simples (1.00m)</option>
+                <option value="j_basculante">Basculante (0.60m)</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">ADICIONAR AO ESTOQUE</button>
     </div>
+
     <div class="manual">
-        <b>💡 DICA:</b> Agora os cômodos são <b>transparentes</b>. Você pode colocar portas e janelas exatamente sobre as linhas das paredes!
+        <b>💡 MANUAL RÁPIDO:</b><br>
+        1. Adicione itens ao estoque.<br>
+        2. Clique no item para por na folha.<br>
+        3. <b>Arraste</b> para posicionar.<br>
+        4. Tecla <b>R</b>: Rotacionar.<br>
+        5. <b>SHIFT + Setas</b>: Ajustar tamanho.<br>
+        6. <b>DEL</b>: Excluir selecionado.
     </div>
+
+    <button class="btn-export" onclick="exportarProjeto()">💾 GERAR DOCUMENTO FINAL</button>
 </div>
 
 <div id="canvas-container">
@@ -65,19 +90,28 @@
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const escala = 30; 
-    const folhaW = 794; const folhaH = 1123;
+    const escala = 25; 
+    const folhaW = 794; const folhaH = 1123; 
     let estoque = [], noTerreno = [], selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
 
-    // Inicializa o tamanho do canvas logo de cara
     canvas.width = folhaW; canvas.height = folhaH;
 
     function adicionarAoEstoque() {
         const t = document.getElementById('sel_tipo').value;
         let w = 3.0, h = 4.0;
-        if(t.startsWith('p_')) { w = (t === 'p_comum') ? 0.8 : 1.6; h = 0.15; }
-        else if(t.startsWith('j_')) { w = (t === 'j_basculante') ? 0.6 : 1.5; h = 0.15; }
+        
+        // Definição de tamanhos padrão
+        if(t === 'p_dupla') { w = 1.6; h = 0.15; }
+        else if(t === 'p_social') { w = 1.2; h = 0.15; }
+        else if(t === 'p_comum') { w = 0.8; h = 0.15; }
+        else if(t === 'p_garagem') { w = 3.5; h = 0.15; }
+        else if(t === 'j_dupla') { w = 1.5; h = 0.15; }
+        else if(t === 'j_simples') { w = 1.0; h = 0.15; }
+        else if(t === 'j_basculante') { w = 0.6; h = 0.15; }
+        else if(t === 'garagem') { w = 3.5; h = 5.5; }
+        else if(t === 'piscina') { w = 3.0; h = 6.0; }
         else if(t === 'banheiro') { w = 1.5; h = 2.5; }
+
         estoque.push({ id: Date.now(), tipo: t, w, h });
         atualizarEstoqueUI();
     }
@@ -90,33 +124,61 @@
             div.className = 'item-pronto';
             div.innerHTML = `<strong>${item.tipo.toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
             div.onclick = () => { 
-                // Adiciona ao terreno e já centraliza um pouco para aparecer na tela
-                noTerreno.push({...item, x:50, y:50, rot:0, id: Date.now()}); 
+                // Posicionando mais ao centro da folha (x:200, y:200)
+                noTerreno.push({...item, x:200, y:200, rot:0, id: Date.now()}); 
                 desenhar(); 
             };
             container.appendChild(div);
         });
     }
 
+    function desenharTabelas() {
+        const xQ = folhaW - 270; ctx.strokeStyle = "#000"; ctx.lineWidth = 1;
+        
+        // QUADRO DE ÁREAS
+        ctx.strokeRect(xQ, 40, 230, 100);
+        ctx.fillStyle = "#f0f0f0"; ctx.fillRect(xQ, 40, 230, 20);
+        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.fillText("QUADRO DE ÁREAS", xQ + 60, 54);
+        
+        let areaC = 0;
+        noTerreno.forEach(o => { if(!o.tipo.startsWith('p_') && !o.tipo.startsWith('j_')) areaC += (o.w * o.h); });
+        const areaT = Number(document.getElementById('terr_w').value) * Number(document.getElementById('terr_h').value);
+
+        ctx.font = "10px Arial";
+        ctx.fillText(`ÁREA TERRENO: ${areaT.toFixed(2)} m²`, xQ + 10, 75);
+        ctx.fillText(`ÁREA CONSTRUÍDA: ${areaC.toFixed(2)} m²`, xQ + 10, 95);
+        ctx.fillText(`ÁREA LIVRE: ${(areaT - areaC).toFixed(2)} m²`, xQ + 10, 115);
+
+        // SELO ABNT
+        const sY = folhaH - 120; ctx.strokeRect(xQ, sY, 230, 80);
+        ctx.beginPath(); ctx.moveTo(xQ, sY + 26); ctx.lineTo(xQ+230, sY + 26); 
+        ctx.moveTo(xQ, sY + 52); ctx.lineTo(xQ+230, sY + 52); ctx.stroke();
+        ctx.font = "bold 9px Arial";
+        ctx.fillText("PROPRIETÁRIO: " + (document.getElementById('cli_nome').value || "NOME").toUpperCase(), xQ+5, sY+17);
+        ctx.fillText("RESPONSÁVEL: " + (document.getElementById('resp_edit').value || "MÁRCIO").toUpperCase(), xQ+5, sY+43);
+        ctx.fillText("ANO: " + document.getElementById('proj_ano').value + " | ESCALA 1:50", xQ+5, sY+70);
+    }
+
     function desenhar() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Desenha o fundo branco da "folha"
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const tw = document.getElementById('terr_w').value * escala;
+        const th = document.getElementById('terr_h').value * escala;
+        ctx.setLineDash([5, 5]); ctx.strokeStyle = "#ccc"; ctx.strokeRect(50, 50, tw, th);
+        ctx.setLineDash([]); 
 
         noTerreno.forEach(obj => {
             const w = obj.w * escala; const h = obj.h * escala;
-            ctx.save();
-            ctx.translate(obj.x + w/2, obj.y + h/2);
-            ctx.rotate(obj.rot * Math.PI / 180);
+            ctx.save(); ctx.translate(obj.x + w/2, obj.y + h/2); ctx.rotate(obj.rot * Math.PI / 180);
 
             const isComodo = !obj.tipo.startsWith('j_') && !obj.tipo.startsWith('p_');
             
             if(isComodo) {
-                ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.2)" : "rgba(255, 255, 255, 0.01)";
+                ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.15)" : "transparent";
+                if(obj.tipo === 'piscina') ctx.fillStyle = "rgba(0, 210, 255, 0.1)";
                 ctx.fillRect(-w/2, -h/2, w, h);
-                ctx.strokeStyle = "#000"; 
+                ctx.strokeStyle = obj.tipo === 'piscina' ? "#00d2ff" : "#000"; 
                 ctx.lineWidth = obj === selecionado ? 3 : 2;
                 ctx.strokeRect(-w/2, -h/2, w, h);
             } else if(obj.tipo.startsWith('j_')) {
@@ -127,31 +189,37 @@
             } else if(obj.tipo.startsWith('p_')) {
                 ctx.fillStyle = "#fff"; ctx.fillRect(-w/2, -h/2, w, h);
                 ctx.strokeStyle = "#8b4513"; ctx.lineWidth = 2; ctx.strokeRect(-w/2, -h/2, w, h);
-                ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+                if(obj.tipo === 'p_dupla' || obj.tipo === 'p_garagem') {
+                    ctx.beginPath();
+                    ctx.arc(-w/2, h/2, w/2, 0, -Math.PI/2, true);
+                    ctx.arc(w/2, h/2, w/2, Math.PI, Math.PI*1.5);
+                    ctx.stroke();
+                } else {
+                    ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+                }
             }
-            
-            ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
-            ctx.fillText(`${obj.tipo.toUpperCase()} (${obj.w.toFixed(2)}m)`, -w/2, -h/2 - 5);
+            ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
+            ctx.fillText(`${obj.tipo.toUpperCase()}`, -w/2, -h/2 - 5);
             ctx.restore();
         });
+        desenharTabelas();
+    }
 
-        // Selo/Texto do proprietário
-        ctx.fillStyle = "#000";
-        ctx.font = "14px Arial";
-        ctx.fillText("Proprietário: " + document.getElementById('prop_nome').value, 20, folhaH - 40);
-        ctx.fillText("Data: " + document.getElementById('proj_data').value, 20, folhaH - 20);
+    function exportarProjeto() {
+        const link = document.createElement('a');
+        link.download = `PLANTA_TECNICA.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
     }
 
     canvas.onmousedown = (e) => {
-        const r = canvas.getBoundingClientRect();
-        const sc = folhaW / r.width;
+        const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width;
         const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
         selecionado = null;
         for (let i = noTerreno.length - 1; i >= 0; i--) {
             let o = noTerreno[i]; const w = o.w * escala, h = o.h * escala;
             if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
-                selecionado = o; arrastando = true;
-                offset.x = mx - o.x; offset.y = my - o.y; break;
+                selecionado = o; arrastando = true; offset.x = mx - o.x; offset.y = my - o.y; break;
             }
         }
         desenhar();
@@ -159,23 +227,22 @@
 
     window.onmousemove = (e) => {
         if (arrastando && selecionado) {
-            const r = canvas.getBoundingClientRect();
-            const sc = folhaW / r.width;
+            const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width;
             selecionado.x = (e.clientX - r.left) * sc - offset.x;
             selecionado.y = (e.clientY - r.top) * sc - offset.y;
             desenhar();
         }
     };
 
-    window.onmouseup = () => { arrastando = false; };
+    window.onmouseup = () => arrastando = false;
 
     canvas.onkeydown = (e) => {
         if (!selecionado) return;
         if (e.shiftKey) {
-            if (e.key === "ArrowRight") selecionado.w += 0.05;
-            if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - 0.05);
-            if (e.key === "ArrowDown") selecionado.h += 0.05;
-            if (e.key === "ArrowUp") selecionado.h = Math.max(0.1, selecionado.h - 0.05);
+            if (e.key === "ArrowRight") selecionado.w += 0.1;
+            if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - 0.1);
+            if (e.key === "ArrowDown") selecionado.h += 0.1;
+            if (e.key === "ArrowUp") selecionado.h = Math.max(0.1, selecionado.h - 0.1);
         } else if (e.key.toLowerCase() === "r") {
             selecionado.rot = (selecionado.rot + 90) % 360;
         } else if (e.key === "Delete") {
@@ -185,7 +252,7 @@
     };
 
     canvas.onclick = () => canvas.focus();
-    desenhar(); // Chama uma vez para limpar a tela inicial
+    desenhar();
 </script>
 </body>
 </html>
