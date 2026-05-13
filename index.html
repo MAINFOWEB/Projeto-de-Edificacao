@@ -2,19 +2,19 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>MAINFOWEB - Projeto de Edificação</title>
+    <title>Projeto de Edificação</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div id="sidebar">
-    <h3 class="logo">MAINFOWEB - Projeto de Edificação</h3>
+    <h3 class="logo">Projeto de Edificação</h3>
     
     <div class="section">
         <label>🎨 COR DO CÔMODO</label>
         <div class="color-picker-container">
             <input type="color" id="cor_escolhida" value="#e0f7fa" onchange="atualizaPreviewCor()">
-            <div id="preview-cor" style="background-color: #e0f7fa;"></div>
+            <div id="preview-cor"></div>
         </div>
     </div>
 
@@ -29,33 +29,37 @@
     <div class="section">
         <label>📐 COMPONENTE</label>
         <select id="sel_tipo">
-            <optgroup label="Áreas Especiais">
-                <option value="piscina">Piscina</option>
-                <option value="kitnet">Kitnet Completa</option>
-                <option value="lavanderia">Lavanderia</option>
-                <option value="corredor">Corredor (Área Social)</option>
-            </optgroup>
-            <optgroup label="Escadas">
-                <option value="escada_reta">Escada Reta</option>
-                <option value="escada_l">Escada em L</option>
-            </optgroup>
-            <optgroup label="Cômodos">
+            <optgroup label="Cômodos e Áreas">
                 <option value="quarto">Quarto</option>
                 <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="banheiro">Banheiro</option>
                 <option value="suite_master">Suíte Master</option>
+                <option value="kitnet">Kitnet</option>
+                <option value="lavanderia">Lavanderia</option>
+                <option value="corredor">Corredor</option>
                 <option value="garagem">Garagem</option>
+                <option value="piscina">Piscina</option>
+            </optgroup>
+            <optgroup label="Escadas">
+                <option value="escada_reta">Escada Reta</option>
+                <option value="escada_l">Escada em L</option>
             </optgroup>
             <optgroup label="Mobiliário">
                 <option value="cama_casal">Cama Casal</option>
                 <option value="cama_solteiro">Cama Solteiro</option>
-                <option value="mesa_6">Mesa (6 Lug)</option>
-                <option value="sofa_3">Sofá (3 Lug)</option>
+                <option value="mesa_4">Mesa (4 Lugares)</option>
+                <option value="mesa_6">Mesa (6 Lugares)</option>
+                <option value="mesa_8">Mesa (8 Lugares)</option>
+                <option value="sofa_2">Sofá (2 Lugares)</option>
+                <option value="sofa_3">Sofá (3 Lugares)</option>
             </optgroup>
-            <optgroup label="Acessos">
-                <option value="porta">Porta (0.80m)</option>
-                <option value="janela">Janela (1.50m)</option>
+            <optgroup label="Acessos (Portas/Janelas)">
+                <option value="porta">Porta Simples (0.80m)</option>
+                <option value="porta_dupla">Porta Dupla (1.60m)</option>
+                <option value="janela">Janela Simples (1.50m)</option>
+                <option value="janela_dupla">Janela Dupla (2.00m)</option>
+                <option value="janela_basculante">Janela Basculante (0.60m)</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">MANDAR PARA ESTOQUE</button>
@@ -83,7 +87,10 @@
 <div id="inventory">
     <h4>📦 ESTOQUE</h4>
     <div id="lista-estoque"></div>
-    <div class="dica">Pressione <b>R</b> para girar<br><b>DEL</b> para apagar</div>
+    <div class="instrucoes">
+        <b>R</b>: Girar | <b>DEL</b>: Apagar<br>
+        Clique e arraste para mover.
+    </div>
 </div>
 
 <script src="script.js"></script>
