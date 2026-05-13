@@ -23,9 +23,9 @@ input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius
 canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform-origin: top center; cursor: crosshair; }
 .zoom-controls { position: fixed; bottom: 25px; left: 330px; display: flex; gap: 10px; z-index: 100; }
 .zoom-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--blue); background: #000; color: var(--blue); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
-.info-uso { font-size: 10px; color: #555; margin-top: 20px; text-align: center; }
+.info-uso { font-size: 10px; color: #777; margin-top: 20px; text-align: center; }
 
 @media print {
     #sidebar, #inventory, .zoom-controls { display: none !important; }
-    canvas { transform: scale(1) !important; box-shadow: none; }
+    canvas { transform: scale(1) !important; box-shadow: none; border: none; }
 }
