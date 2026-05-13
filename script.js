@@ -19,7 +19,7 @@ const tamanhosBase = {
     'janela_dupla': {w: 2.5, h: 0.15}, 'janela_basculante': {w: 0.6, h: 0.15}
 };
 
-// CORREÇÃO: blur() remove o foco do botão para não interferir no teclado
+// Gerencia o zoom e remove o foco do botão para não travar o teclado
 function ajustarZoom(delta, btn) {
     zoom = Math.min(Math.max(0.1, zoom + delta), 1.5);
     canvas.style.transform = `scale(${zoom})`;
@@ -53,7 +53,7 @@ function atualizarEstoqueUI() {
 
 function desenharItem(o) {
     const andarVisivel = document.getElementById('sel_andar_view').value;
-    if (o.andar !== andarVisivel) return;
+    if (o.andar.toString() !== andarVisivel.toString()) return;
 
     const w = o.w * escalaPx, h = o.h * escalaPx;
     ctx.save();
@@ -101,39 +101,35 @@ function desenhar() {
     ctx.fillText("RESP. TÉCNICO: " + (document.getElementById('resp_tec').value || "---"), sX + 20, sY + 75);
     
     let andarAtual = document.getElementById('sel_andar_view').value;
-    let areaTotal = itens.filter(i => i.andar === andarAtual).reduce((sum, i) => sum + (i.w * i.h), 0).toFixed(2);
+    let areaTotal = itens.filter(i => i.andar.toString() === andarAtual.toString()).reduce((sum, i) => sum + (i.w * i.h), 0).toFixed(2);
     ctx.fillText("ÁREA PAVIMENTO: " + areaTotal + " m²", sX + 20, sY + 110);
     ctx.fillText("ÁREA TERRENO: " + (document.getElementById('area_terreno').value || "0") + " m²", sX + 20, sY + 145);
     ctx.fillText("DATA: " + new Date().toLocaleDateString(), sX + 20, sY + 180);
 }
 
+// CORREÇÃO DA SELEÇÃO: Calcula a escala real para o clique não "fugir" com o zoom
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
-    // Ajuste importante: arredondar ou garantir coordenadas exatas
-    const mx = (e.clientX - r.left) / zoom;
-    const my = (e.clientY - r.top) / zoom;
+    const escalaRealX = r.width / canvas.width;
+    const escalaRealY = r.height / canvas.height;
+
+    const mx = (e.clientX - r.left) / escalaRealX;
+    const my = (e.clientY - r.top) / escalaRealY;
     
-    // Pegamos o valor do andar atual como String para comparar corretamente
     const andarVisivel = document.getElementById('sel_andar_view').value.toString();
     
     selecionado = null;
-    
-    // Percorremos do último para o primeiro (quem está em cima recebe o clique)
     for(let i = itens.length - 1; i >= 0; i--) {
         let o = itens[i];
-        
-        // Só permite selecionar se o item pertencer ao andar que estamos vendo
         if(o.andar.toString() === andarVisivel) {
-            const larguraPx = o.w * escalaPx;
-            const alturaPx = o.h * escalaPx;
-
-            // Verifica se o mouse está dentro dos limites do objeto
-            if(mx >= o.x && mx <= o.x + larguraPx && my >= o.y && my <= o.y + alturaPx) {
+            const wPx = o.w * escalaPx;
+            const hPx = o.h * escalaPx;
+            if(mx >= o.x && mx <= o.x + wPx && my >= o.y && my <= o.y + hPx) {
                 selecionado = o; 
                 arrastando = true;
                 mouseOffset.x = mx - o.x; 
                 mouseOffset.y = my - o.y;
-                break; // Para no primeiro item encontrado (o que está no topo)
+                break; 
             }
         }
     }
@@ -143,8 +139,10 @@ canvas.addEventListener('mousedown', (e) => {
 window.addEventListener('mousemove', (e) => {
     if(arrastando && selecionado) {
         const r = canvas.getBoundingClientRect();
-        selecionado.x = ((e.clientX - r.left) / zoom) - mouseOffset.x;
-        selecionado.y = ((e.clientY - r.top) / zoom) - mouseOffset.y;
+        const escalaRealX = r.width / canvas.width;
+        const escalaRealY = r.height / canvas.height;
+        selecionado.x = ((e.clientX - r.left) / escalaRealX) - mouseOffset.x;
+        selecionado.y = ((e.clientY - r.top) / escalaRealY) - mouseOffset.y;
         desenhar();
     }
 });
@@ -158,7 +156,7 @@ window.addEventListener('keydown', (e) => {
     if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 90) % 360;
     if(e.key === 'Delete' || e.key === 'Backspace') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
     
-    // CORREÇÃO: Lógica invertida conforme pedido (Cima aumenta, Baixo diminui)
+    // Seta para CIMA aumenta / Seta para BAIXO diminui
     if(e.key === 'ArrowUp') selecionado.h += step;
     if(e.key === 'ArrowDown') selecionado.h = Math.max(0.1, selecionado.h - step);
     if(e.key === 'ArrowRight') selecionado.w += step;
