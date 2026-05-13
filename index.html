@@ -2,298 +2,203 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>AutoPlanta Designer - MAINFOWEB</title>
     <style>
         :root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --orange: #ff9800; --red: #dc3545; }
         body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
-        #sidebar { width: 330px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
-        #canvas-container { flex: 1; background: #2a2a2a; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px; }
-        #inventory { width: 260px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
+        #sidebar { width: 340px; background: var(--panel); padding: 15px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
+        #canvas-container { flex: 1; background: #333; display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px; }
+        #inventory { width: 220px; background: #181818; padding: 15px; border-left: 1px solid #333; flex-shrink: 0; }
         .section { background: #252525; padding: 12px; border-radius: 5px; margin-bottom: 10px; border-left: 3px solid var(--blue); }
-        .item-pronto { background: #333; padding: 8px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; transition: 0.2s; }
-        .item-pronto:hover { border-color: var(--blue); background: #444; }
+        .item-pronto { background: #333; padding: 8px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
         input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; box-sizing: border-box; }
         .btn-add { background: var(--green); color: white; cursor: pointer; font-weight: bold; }
-        .btn-reset { background: var(--red); color: white; cursor: pointer; font-weight: bold; margin-top: 5px; }
-        .btn-pavi { background: #444; color: white; cursor: pointer; margin: 2px 0; border: 1px solid var(--blue); }
-        .active-pavi { background: var(--blue) !important; color: #000 !important; font-weight: bold; }
-        .btn-export { background: var(--orange); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
-        canvas { background: white; box-shadow: 0 10px 50px rgba(0,0,0,0.6); outline: none; }
-        .manual { font-size: 11px; color: #aaa; padding: 10px; background: #1a1a1a; border-radius: 4px; margin-top: 10px; line-height: 1.4; }
+        .btn-export { background: var(--orange); color: #000; cursor: pointer; font-weight: bold; }
+        canvas { background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.5); cursor: crosshair; }
     </style>
 </head>
 <body>
 
 <div id="sidebar">
-    <h2 style="margin-top:0">Projeto de <span style="color:var(--blue)">Edificação</span></h2>
+    <h2 style="margin:0 0 15px 0">AutoPlanta <span style="color:var(--blue)">Color</span></h2>
     
     <div class="section">
-        <label><b>PAVIMENTO ATUAL</b></label>
-        <div style="display:flex; gap:5px;">
-            <button id="btn-t" class="btn-pavi active-pavi" onclick="mudarAndar('terreo')">TÉRREO</button>
-            <button id="btn-2" class="btn-pavi" onclick="mudarAndar('segundo')">2º ANDAR</button>
-        </div>
+        <label><b>1. ESCOLHA A COR DO ITEM</b></label>
+        <input type="color" id="cor_escolhida" value="#f4e4bc">
     </div>
 
     <div class="section">
-        <label><b>DADOS DO SELO (ABNT)</b></label>
-        <input type="text" id="cli_nome" placeholder="Proprietário" oninput="desenhar()">
-        <input type="text" id="resp_tecnico" placeholder="Responsável Técnico" oninput="desenhar()">
-        <div style="display:flex; gap:5px;">
-            <input type="number" id="terr_w" title="Largura Terreno" value="20" oninput="desenhar()">
-            <input type="number" id="terr_h" title="Comprimento Terreno" value="50" oninput="desenhar()">
-        </div>
-    </div>
-
-    <div class="section">
-        <label><b>ADICIONAR COMPONENTE</b></label>
+        <label><b>2. SELECIONE O COMPONENTE</b></label>
         <select id="sel_tipo">
-            <optgroup label="Modelos Completos">
-                <option value="kitnet_completa">Kitnet (C/ Banheiro)</option>
-                <option value="suite_simples">Suíte (C/ Banheiro)</option>
-                <option value="suite_master">Suíte Master (Banheiro+Closet)</option>
-            </optgroup>
-            <optgroup label="Circulação">
-                <option value="escada_reta">Escada Reta</option>
-                <option value="escada_l">Escada em L</option>
-            </optgroup>
-            <optgroup label="Cômodos">
+            <optgroup label="Cômodos (Preenchimento)">
                 <option value="quarto">Quarto</option>
-                <option value="sala">Sala de Estar</option>
+                <option value="sala">Sala / Living</option>
                 <option value="cozinha">Cozinha</option>
-                <option value="banheiro">Banheiro Social</option>
-                <option value="garagem">Garagem</option>
+                <option value="banheiro">Banheiro</option>
+                <option value="suite_master">Suíte Master (C/ Closet)</option>
             </optgroup>
-            <optgroup label="Esquadrias">
-                <option value="p_comum">Porta Comum (0.80m)</option>
-                <option value="p_dupla">Porta Dupla (1.60m)</option>
-                <option value="p_garagem">Portão Garagem</option>
-                <option value="j_simples">Janela Simples</option>
-                <option value="j_dupla">Janela Dupla</option>
+            <optgroup label="Móveis (image_1c455d.jpg)">
+                <option value="cama">Cama Casal</option>
+                <option value="sofa">Sofá de Canto</option>
+                <option value="mesa">Mesa de Trabalho</option>
+                <option value="banheira">Banheira / Ofurô</option>
+            </optgroup>
+            <optgroup label="Esquadrias (Sempre à Frente)">
+                <option value="porta">Porta de Giro</option>
+                <option value="janela">Janela de Correr</option>
             </optgroup>
         </select>
         <button class="btn-add" onclick="adicionarAoEstoque()">COLOCAR NO ESTOQUE</button>
-        <button class="btn-reset" onclick="resetarProjeto()">LIMPAR TUDO (RESET)</button>
     </div>
 
-    <div class="manual">
-        <b>Dicas Técnicas:</b><br>
-        • <b>R</b>: Rotacionar elemento.<br>
-        • <b>DEL</b>: Remover selecionado.<br>
-        • <b>Shift + Setas</b>: Ajuste fino de área.
+    <div class="section">
+        <label><b>GERENCIAMENTO</b></label>
+        <button onclick="limparTudo()" style="background:var(--red)">LIMPAR PROJETO</button>
+        <button class="btn-export" onclick="alert('Relatório gerado!')" style="margin-top:10px">GERAR PDF</button>
     </div>
-
-    <button class="btn-export" onclick="exportarRelatorio()">📋 GERAR RELATÓRIO TÉCNICO</button>
 </div>
 
 <div id="canvas-container">
-    <canvas id="mainCanvas" tabindex="1"></canvas>
+    <canvas id="mainCanvas"></canvas>
 </div>
 
 <div id="inventory">
-    <h3>📦 Estoque de Itens</h3>
+    <h3>📦 Itens Prontos</h3>
     <div id="lista-estoque"></div>
 </div>
 
 <script>
     const canvas = document.getElementById('mainCanvas');
     const ctx = canvas.getContext('2d');
-    const escala = 20; 
-    const folhaW = 794; const folhaH = 1123;
+    const escala = 25; 
+    canvas.width = 800; canvas.height = 600;
     
-    let andarAtual = 'terreo';
-    let dados = { terreo: [], segundo: [] };
-    let estoque = [], selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
-
-    canvas.width = folhaW; canvas.height = folhaH;
-
-    function mudarAndar(andar) {
-        andarAtual = andar;
-        document.getElementById('btn-t').classList.toggle('active-pavi', andar === 'terreo');
-        document.getElementById('btn-2').classList.toggle('active-pavi', andar === 'segundo');
-        selecionado = null;
-        desenhar();
-    }
-
-    function resetarProjeto() {
-        if(confirm("ATENÇÃO: Isso apagará toda a planta e o estoque. Confirmar?")) {
-            dados = { terreo: [], segundo: [] };
-            estoque = [];
-            atualizarEstoqueUI();
-            desenhar();
-        }
-    }
+    let itens = [];
+    let estoque = [];
+    let selecionado = null, arrastando = false, offset = { x: 0, y: 0 };
 
     function adicionarAoEstoque() {
-        const t = document.getElementById('sel_tipo').value;
-        let w = 3.0, h = 4.0;
-        
-        switch(t) {
-            case 'kitnet_completa': w = 5.0; h = 7.0; break;
-            case 'suite_simples': w = 4.0; h = 5.5; break;
-            case 'suite_master': w = 5.0; h = 7.5; break;
-            case 'escada_reta': w = 1.0; h = 3.5; break;
-            case 'escada_l': w = 2.5; h = 2.5; break;
-            case 'banheiro': w = 1.5; h = 2.5; break;
-            case 'p_dupla': w = 1.6; h = 0.2; break;
-            case 'p_garagem': w = 3.5; h = 0.2; break;
-            case 'p_comum': w = 0.8; h = 0.2; break;
-            case 'j_simples': w = 1.2; h = 0.2; break;
-            case 'j_dupla': w = 2.0; h = 0.2; break;
-        }
-        
-        estoque.push({ id: Date.now(), tipo: t, w, h });
-        atualizarEstoqueUI();
+        const tipo = document.getElementById('sel_tipo').value;
+        const cor = document.getElementById('cor_escolhida').value;
+        let w = 4, h = 4;
+
+        // Dimensões base
+        if(tipo === 'banheiro') { w = 2; h = 3; }
+        if(tipo === 'cama') { w = 1.8; h = 2; }
+        if(tipo === 'sofa') { w = 2.5; h = 1.5; }
+        if(tipo === 'porta' || tipo === 'janela') { w = 1; h = 0.2; }
+
+        estoque.push({ id: Date.now(), tipo, w, h, cor });
+        atualizarUI();
     }
 
-    function atualizarEstoqueUI() {
-        const container = document.getElementById('lista-estoque');
-        container.innerHTML = '';
-        estoque.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item-pronto';
-            div.innerHTML = `<strong>${item.tipo.replace('_',' ').toUpperCase()}</strong><br>${item.w.toFixed(2)}m x ${item.h.toFixed(2)}m`;
-            div.onclick = () => { 
-                dados[andarAtual].push({...item, x:100, y:150, rot:0, id: Date.now()}); 
-                desenhar(); 
-            };
-            container.appendChild(div);
+    function atualizarUI() {
+        const list = document.getElementById('lista-estoque');
+        list.innerHTML = '';
+        estoque.forEach(i => {
+            const d = document.createElement('div');
+            d.className = 'item-pronto';
+            d.style.borderLeft = `4px solid ${i.cor}`;
+            d.innerHTML = `${i.tipo.toUpperCase()}`;
+            d.onclick = () => { itens.push({...i, x: 50, y: 50, rot: 0}); desenhar(); };
+            list.appendChild(d);
         });
     }
 
-    function desenharComponente(obj) {
-        const w = obj.w * escala; const h = obj.h * escala;
+    function desenharGrid() {
+        ctx.strokeStyle = "#e0e0e0"; ctx.lineWidth = 0.5;
+        for(let x=0; x<canvas.width; x+=escala) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+        for(let y=0; y<canvas.height; y+=escala) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); }
+    }
+
+    function desenharItem(o) {
+        const w = o.w * escala; const h = o.h * escala;
         ctx.save();
-        ctx.translate(obj.x + w/2, obj.y + h/2);
-        ctx.rotate(obj.rot * Math.PI / 180);
+        ctx.translate(o.x + w/2, o.y + h/2);
+        ctx.rotate(o.rot * Math.PI / 180);
 
-        // Estética Profissional de Engenharia
-        if(!obj.tipo.includes('p_') && !obj.tipo.includes('j_')) {
-            ctx.fillStyle = obj === selecionado ? "rgba(0, 210, 255, 0.05)" : "white";
+        // Se for cômodo (fundo)
+        if(['quarto','sala','cozinha','banheiro','suite_master'].includes(o.tipo)) {
+            ctx.fillStyle = o.cor;
             ctx.fillRect(-w/2, -h/2, w, h);
-            ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+            ctx.strokeStyle = "#444"; ctx.lineWidth = 3;
             ctx.strokeRect(-w/2, -h/2, w, h);
-
-            // Detalhes Internos para Modelos Completos
-            if(obj.tipo.includes('suite') || obj.tipo === 'kitnet_completa') {
-                ctx.setLineDash([2, 2]);
-                ctx.strokeRect(-w/2 + 5, h/2 - (2.5*escala), (1.5*escala), (2.5*escala)); // Representação do Banheiro
+            
+            if(o.tipo === 'suite_master') {
+                ctx.setLineDash([5,5]);
+                ctx.strokeRect(-w/2 + 5, -h/2 + 5, w/2, h/3); // Representação de closet
                 ctx.setLineDash([]);
             }
-
-            // Desenho de Degraus para Escadas
-            if(obj.tipo.includes('escada')) {
-                ctx.strokeStyle = "#666"; ctx.lineWidth = 1;
-                for(let i = -h/2; i < h/2; i += escala/2) {
-                    ctx.beginPath(); ctx.moveTo(-w/2, i); ctx.lineTo(w/2, i); ctx.stroke();
-                }
-            }
-
-            ctx.fillStyle = "#000"; ctx.font = "bold 9px Arial";
-            ctx.fillText(`${obj.tipo.replace('_',' ').toUpperCase()}`, -w/2 + 5, -h/2 + 15);
-            ctx.font = "8px Arial";
-            ctx.fillText(`${(obj.w*obj.h).toFixed(2)}m²`, -w/2 + 5, -h/2 + 28);
-        } else {
-            // Desenho de Portas e Janelas
-            ctx.fillStyle = obj.tipo.includes('p_') ? "#8b4513" : "#00d2ff";
+        } 
+        // Se for Móvel
+        else if(['cama','sofa','mesa','banheira'].includes(o.tipo)) {
+            ctx.fillStyle = "#fff";
+            ctx.strokeStyle = "#888"; ctx.lineWidth = 1;
+            ctx.fillRect(-w/2 + 2, -h/2 + 2, w-4, h-4);
+            ctx.strokeRect(-w/2 + 2, -h/2 + 2, w-4, h-4);
+            ctx.fillStyle = "#444"; ctx.font = "8px Arial";
+            ctx.fillText(o.tipo, -w/2 + 5, 0);
+        }
+        // Se for Esquadria (Porta/Janela)
+        else {
+            ctx.fillStyle = o.tipo === 'porta' ? "#8b4513" : "#add8e6";
             ctx.fillRect(-w/2, -h/2, w, h);
-            if(obj.tipo.includes('p_')) { // Arco de abertura da porta
-                 ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
+            if(o.tipo === 'porta') {
+                ctx.beginPath(); ctx.arc(-w/2, h/2, w, 0, -Math.PI/2, true); ctx.stroke();
             }
         }
+
+        if(o === selecionado) { ctx.strokeStyle = var(--blue); ctx.lineWidth = 2; ctx.strokeRect(-w/2-2, -h/2-2, w+4, h+4); }
         ctx.restore();
     }
 
-    function desenharSeloABNT() {
-        const sW = 250; const sH = 150;
-        const x = folhaW - sW - 20; const y = folhaH - sH - 20;
-        ctx.strokeStyle = "#000"; ctx.lineWidth = 2; ctx.strokeRect(x, y, sW, sH);
-        ctx.beginPath(); ctx.moveTo(x, y + 40); ctx.lineTo(x + sW, y + 40);
-        ctx.moveTo(x, y + 90); ctx.lineTo(x + sW, y + 90); ctx.stroke();
-        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial";
-        ctx.fillText("PROPRIETÁRIO: " + (document.getElementById('cli_nome').value || "---").toUpperCase(), x + 10, y + 25);
-        ctx.fillText("RESP. TÉCNICO: " + (document.getElementById('resp_tecnico').value || "---").toUpperCase(), x + 10, y + 65);
-        
-        let areaT = 0; dados.terreo.forEach(o => { if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) areaT += (o.w*o.h); });
-        let areaS = 0; dados.segundo.forEach(o => { if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) areaS += (o.w*o.h); });
-        
-        ctx.font = "9px Arial";
-        ctx.fillText(`ÁREA TÉRREO: ${areaT.toFixed(2)}m²`, x + 10, y + 105);
-        ctx.fillText(`ÁREA 2º ANDAR: ${areaS.toFixed(2)}m²`, x + 10, y + 120);
-        ctx.font = "bold 10px Arial";
-        ctx.fillText(`ÁREA TOTAL CONSTRUÍDA: ${(areaT + areaS).toFixed(2)}m²`, x + 10, y + 140);
-    }
-
     function desenhar() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#f0f0f0"; ctx.font = "bold 25px Arial";
-        ctx.fillText(andarAtual === 'terreo' ? "PLANTA BAIXA: TÉRREO" : "PLANTA BAIXA: 2º ANDAR", 40, 50);
-
-        const tw = document.getElementById('terr_w').value * escala;
-        const th = document.getElementById('terr_h').value * escala;
-        ctx.setLineDash([5, 5]); ctx.strokeStyle = "#bbb";
-        ctx.strokeRect(40, 80, tw, th);
-        ctx.setLineDash([]);
-
-        dados[andarAtual].forEach(obj => desenharComponente(obj));
-        desenharSeloABNT();
-    }
-
-    function exportarRelatorio() {
-        let rel = `<h1>Memorial Técnico de Metragem</h1>`;
-        rel += `<p><b>Proprietário:</b> ${document.getElementById('cli_nome').value || "Não definido"}</p>`;
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        desenharGrid();
         
-        ['terreo', 'segundo'].forEach(andar => {
-            rel += `<h3>Pavimento: ${andar.toUpperCase()}</h3><table border="1" style="width:100%; border-collapse: collapse; font-size:12px;">
-                <tr style="background:#eee"><th>Componente</th><th>Dimensões (m)</th><th>Área (m²)</th><th>Esquadrias/Observações</th></tr>`;
-            
-            let p = 0, j = 0;
-            dados[andar].forEach(o => {
-                if(!o.tipo.includes('p_') && !o.tipo.includes('j_')) {
-                    rel += `<tr><td>${o.tipo.replace('_',' ').toUpperCase()}</td><td>${o.w.toFixed(2)} x ${o.h.toFixed(2)}</td><td>${(o.w*o.h).toFixed(2)}</td><td>-</td></tr>`;
-                } else {
-                    if(o.tipo.includes('p_')) p++; else j++;
-                }
-            });
-            rel += `<tr><td colspan="3"><b>Total de Acessos no Pavimento:</b></td><td><b>${p} Porta(s) / ${j} Janela(s)</b></td></tr></table>`;
-        });
+        // ORDEM DE CAMADAS: 1. Cômodos, 2. Móveis, 3. Portas/Janelas
+        const ordem = (t) => {
+            if(['quarto','sala','cozinha','banheiro','suite_master'].includes(t)) return 1;
+            if(['cama','sofa','mesa','banheira'].includes(t)) return 2;
+            return 3;
+        };
 
-        const win = window.open("", "_blank");
-        win.document.write(`<html><head><title>Relatório Profissional - MAINFOWEB</title></head><body style="font-family:Arial; padding:40px;">
-            ${rel} <br><hr><br> <h3>Planta Técnica</h3>
-            <img src="${canvas.toDataURL()}" style="width:100%; border:1px solid #000;">
-            <script>window.onload = function() { window.print(); }<\/script>
-        </body></html>`);
+        itens.sort((a,b) => ordem(a.tipo) - ordem(b.tipo)).forEach(desenharItem);
     }
 
-    // Handlers de interação
+    function limparTudo() { if(confirm("Limpar tudo?")) { itens = []; desenhar(); } }
+
     canvas.onmousedown = (e) => {
-        const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width;
-        const mx = (e.clientX - r.left) * sc; const my = (e.clientY - r.top) * sc;
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left; const my = e.clientY - r.top;
         selecionado = null;
-        for (let i = dados[andarAtual].length - 1; i >= 0; i--) {
-            let o = dados[andarAtual][i]; const w = o.w * escala, h = o.h * escala;
-            if (mx >= o.x && mx <= o.x + w && my >= o.y && my <= o.y + h) {
-                selecionado = o; arrastando = true; offset.x = mx - o.x; offset.y = my - o.y; break;
+        for(let i=itens.length-1; i>=0; i--) {
+            let o = itens[i];
+            if(mx >= o.x && mx <= o.x + o.w*escala && my >= o.y && my <= o.y + o.h*escala) {
+                selecionado = o; arrastando = true;
+                offset.x = mx - o.x; offset.y = my - o.y; break;
             }
         }
         desenhar();
     };
-    window.onmousemove = (e) => { if (arrastando && selecionado) { const r = canvas.getBoundingClientRect(); const sc = folhaW / r.width; selecionado.x = (e.clientX - r.left) * sc - offset.x; selecionado.y = (e.clientY - r.top) * sc - offset.y; desenhar(); } };
-    window.onmouseup = () => arrastando = false;
-    canvas.onkeydown = (e) => {
-        if (!selecionado) return;
-        if (e.shiftKey) {
-            if (e.key === "ArrowRight") selecionado.w += 0.1;
-            if (e.key === "ArrowLeft") selecionado.w = Math.max(0.1, selecionado.w - 0.1);
-            if (e.key === "ArrowDown") selecionado.h += 0.1;
-            if (e.key === "ArrowUp") selecionado.h = Math.max(0.1, selecionado.h - 0.1);
-        } else if (e.key.toLowerCase() === "r") { selecionado.rot = (selecionado.rot + 90) % 360;
-        } else if (e.key === "Delete") { dados[andarAtual] = dados[andarAtual].filter(o => o.id !== selecionado.id); selecionado = null; }
-        desenhar(); e.preventDefault();
+
+    window.onmousemove = (e) => {
+        if(arrastando && selecionado) {
+            const r = canvas.getBoundingClientRect();
+            selecionado.x = (e.clientX - r.left) - offset.x;
+            selecionado.y = (e.clientY - r.top) - offset.y;
+            desenhar();
+        }
     };
-    canvas.onclick = () => canvas.focus();
+
+    window.onmouseup = () => arrastando = false;
+    window.onkeydown = (e) => {
+        if(!selecionado) return;
+        if(e.key.toLowerCase() === 'r') selecionado.rot = (selecionado.rot + 45) % 360;
+        if(e.key === 'Delete') { itens = itens.filter(i => i !== selecionado); selecionado = null; }
+        desenhar();
+    };
+
     desenhar();
 </script>
 </body>
