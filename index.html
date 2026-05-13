@@ -25,11 +25,16 @@
     <input type="text" id="cli_nome" placeholder="Nome do Cliente">
     <input type="text" id="resp_tec" placeholder="Responsável Técnico">
     <div style="display: flex; gap: 5px; margin-top: 5px;">
-        <input type="number" id="terr_larg" placeholder="Larg. (m)" oninput="calcularArea()">
+        <input type="number" id="terr_larg" placeholder="Larg. (m)">
         <span style="color: #eee; align-self: center;">x</span>
-        <input type="number" id="terr_comp" placeholder="Comp. (m)" oninput="calcularArea()">
+        <input type="number" id="terr_comp" placeholder="Comp. (m)">
     </div>
     <input type="hidden" id="area_terreno" value="0">
+    
+    <!-- BOTÃO DE DIAGRAMAÇÃO -->
+    <button onclick="enviarDadosParaPapel()" style="background-color: #00d2ff; color: #000; font-weight: bold; margin-top: 10px; width: 100%; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+        ENVIAR PARA O PAPEL
+    </button>
 </div>
 
     <div class="section">
