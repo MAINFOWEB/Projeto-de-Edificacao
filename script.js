@@ -10,7 +10,7 @@ let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let zoom = 0.5;
 
-// Estado dos dados técnicos (só aparecem no papel após "Enviar")
+// Estado dos dados técnicos e do terreno
 let dadosNoPapel = {
     cliente: "",
     tecnico: "",
@@ -35,17 +35,21 @@ function ajustarZoom(delta, btn) {
     if (btn) btn.blur(); 
 }
 
-// FUNÇÃO DO NOVO BOTÃO: Processa e insere os dados no diagrama
+// ESSA FUNÇÃO É O QUE FALTAVA PARA "AVISAR" O PAPEL
 function enviarDadosParaPapel() {
-    dadosNoPapel.cliente = document.getElementById('cli_nome').value.toUpperCase();
-    dadosNoPapel.tecnico = document.getElementById('resp_tec').value.toUpperCase();
-    dadosNoPapel.largura = parseFloat(document.getElementById('terr_larg').value) || 0;
-    dadosNoPapel.comprimento = parseFloat(document.getElementById('terr_comp').value) || 0;
-    dadosNoPapel.area = (dadosNoPapel.largura * dadosNoPapel.comprimento).toFixed(2);
+    const nome = document.getElementById('cli_nome').value;
+    const tec = document.getElementById('resp_tec').value;
+    const l = parseFloat(document.getElementById('terr_larg').value) || 0;
+    const c = parseFloat(document.getElementById('terr_comp').value) || 0;
+
+    dadosNoPapel.cliente = nome ? nome.toUpperCase() : "---";
+    dadosNoPapel.tecnico = tec ? tec.toUpperCase() : "---";
+    dadosNoPapel.largura = l;
+    dadosNoPapel.comprimento = c;
+    dadosNoPapel.area = (l * c).toFixed(2);
     dadosNoPapel.ativo = true;
     
-    desenhar();
-    alert("Dados e Limites do Terreno atualizados no papel!");
+    desenhar(); // Força o redesenho imediato
 }
 
 function adicionarAoEstoque() {
@@ -66,7 +70,7 @@ function atualizarEstoqueUI() {
         div.style.borderLeft = `5px solid ${i.cor}`;
         div.innerHTML = `<b>${i.tipo.toUpperCase()}</b> (Andar ${i.andar})`;
         div.onclick = () => { 
-            const n = {...i, x: 150, y: 150, rot: 0, id: Date.now()};
+            const n = {...i, x: 100, y: 100, rot: 0, id: Date.now()};
             itens.push(n); selecionado = n; desenhar(); 
         };
         container.appendChild(div);
@@ -98,18 +102,28 @@ function desenharItem(o) {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade
+    // Grade de Fundo (Papel Milimetrado)
     ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 0.5; ctx.setLineDash([]);
     for(let i=0; i<canvas.width; i+=escalaPx) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
     for(let j=0; j<canvas.height; j+=escalaPx) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
-    // Desenha o limite do terreno se os dados foram "enviados"
+    // --- AGORA APARECE O CAMPO DO TERRENO NO PAPEL ---
     if (dadosNoPapel.ativo && dadosNoPapel.largura > 0) {
         ctx.save();
-        ctx.strokeStyle = "#ff0000"; ctx.lineWidth = 3; ctx.setLineDash([10, 5]);
+        // Área interna do terreno (um fundo leve para destacar)
+        ctx.fillStyle = "rgba(0, 210, 255, 0.05)";
+        ctx.fillRect(50, 50, dadosNoPapel.largura * escalaPx, dadosNoPapel.comprimento * escalaPx);
+        
+        // Borda do terreno
+        ctx.strokeStyle = "#ff0000"; 
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 5]); 
         ctx.strokeRect(50, 50, dadosNoPapel.largura * escalaPx, dadosNoPapel.comprimento * escalaPx);
-        ctx.fillStyle = "#ff0000"; ctx.font = "bold 14px Arial";
-        ctx.fillText(`LIMITE DO TERRENO (${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m)`, 60, 40);
+        
+        // Etiqueta do Limite
+        ctx.fillStyle = "#ff0000";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText(`LIMITE DO TERRENO: ${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m`, 55, 45);
         ctx.restore();
     }
 
@@ -128,29 +142,22 @@ function desenhar() {
     let andarAtual = document.getElementById('sel_andar_view').value;
     let areaTotal = itens.filter(i => i.andar.toString() === andarAtual.toString()).reduce((sum, i) => sum + (i.w * i.h), 0).toFixed(2);
     ctx.fillText("ÁREA PAVIMENTO: " + areaTotal + " m²", sX + 20, sY + 110);
-    
-    if(dadosNoPapel.ativo) {
-        ctx.fillText(`TERRENO: ${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m (${dadosNoPapel.area} m²)`, sX + 20, sY + 145);
-    } else {
-        ctx.fillText("TERRENO: ---", sX + 20, sY + 145);
-    }
+    ctx.fillText(`TERRENO: ${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m (${dadosNoPapel.area} m²)`, sX + 20, sY + 145);
     ctx.fillText("DATA: " + new Date().toLocaleDateString(), sX + 20, sY + 180);
 }
 
-// ... (Mantenha o restante das funções de mousedown, mousemove e keydown iguais ao anterior)
+// Eventos de Mouse (Cálculo de Zoom Corrigido)
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
-    const escalaRealX = r.width / canvas.width;
-    const escalaRealY = r.height / canvas.height;
-    const mx = (e.clientX - r.left) / escalaRealX;
-    const my = (e.clientY - r.top) / escalaRealY;
-    const andarVisivel = document.getElementById('sel_andar_view').value.toString();
+    const ex = r.width / canvas.width, ey = r.height / canvas.height;
+    const mx = (e.clientX - r.left) / ex, my = (e.clientY - r.top) / ey;
+    const andar = document.getElementById('sel_andar_view').value.toString();
     selecionado = null;
     for(let i = itens.length - 1; i >= 0; i--) {
         let o = itens[i];
-        if(o.andar.toString() === andarVisivel) {
-            const wPx = o.w * escalaPx, hPx = o.h * escalaPx;
-            if(mx >= o.x && mx <= o.x + wPx && my >= o.y && my <= o.y + hPx) {
+        if(o.andar.toString() === andar) {
+            const wP = o.w * escalaPx, hP = o.h * escalaPx;
+            if(mx >= o.x && mx <= o.x + wP && my >= o.y && my <= o.y + hP) {
                 selecionado = o; arrastando = true;
                 mouseOffset.x = mx - o.x; mouseOffset.y = my - o.y;
                 break; 
@@ -163,10 +170,9 @@ canvas.addEventListener('mousedown', (e) => {
 window.addEventListener('mousemove', (e) => {
     if(arrastando && selecionado) {
         const r = canvas.getBoundingClientRect();
-        const escalaRealX = r.width / canvas.width;
-        const escalaRealY = r.height / canvas.height;
-        selecionado.x = ((e.clientX - r.left) / escalaRealX) - mouseOffset.x;
-        selecionado.y = ((e.clientY - r.top) / escalaRealY) - mouseOffset.y;
+        const ex = r.width / canvas.width, ey = r.height / canvas.height;
+        selecionado.x = ((e.clientX - r.left) / ex) - mouseOffset.x;
+        selecionado.y = ((e.clientY - r.top) / ey) - mouseOffset.y;
         desenhar();
     }
 });
