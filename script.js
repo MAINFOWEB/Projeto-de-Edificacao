@@ -10,6 +10,16 @@ let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let zoom = 0.5;
 
+// Estado dos dados técnicos (só aparecem no papel após "Enviar")
+let dadosNoPapel = {
+    cliente: "",
+    tecnico: "",
+    largura: 0,
+    comprimento: 0,
+    area: 0,
+    ativo: false
+};
+
 const tamanhosBase = {
     'suite_master': {w: 6, h: 5}, 'suite_comum': {w: 4, h: 4.5}, 'kitnet': {w: 5, h: 6},
     'quarto': {w: 4, h: 4}, 'sala': {w: 5, h: 5}, 'cozinha': {w: 3.5, h: 4},
@@ -25,11 +35,17 @@ function ajustarZoom(delta, btn) {
     if (btn) btn.blur(); 
 }
 
-function calcularArea() {
-    const larg = parseFloat(document.getElementById('terr_larg').value) || 0;
-    const comp = parseFloat(document.getElementById('terr_comp').value) || 0;
-    document.getElementById('area_terreno').value = (larg * comp).toFixed(2);
+// FUNÇÃO DO NOVO BOTÃO: Processa e insere os dados no diagrama
+function enviarDadosParaPapel() {
+    dadosNoPapel.cliente = document.getElementById('cli_nome').value.toUpperCase();
+    dadosNoPapel.tecnico = document.getElementById('resp_tec').value.toUpperCase();
+    dadosNoPapel.largura = parseFloat(document.getElementById('terr_larg').value) || 0;
+    dadosNoPapel.comprimento = parseFloat(document.getElementById('terr_comp').value) || 0;
+    dadosNoPapel.area = (dadosNoPapel.largura * dadosNoPapel.comprimento).toFixed(2);
+    dadosNoPapel.ativo = true;
+    
     desenhar();
+    alert("Dados e Limites do Terreno atualizados no papel!");
 }
 
 function adicionarAoEstoque() {
@@ -65,17 +81,13 @@ function desenharItem(o) {
     ctx.save();
     ctx.translate(o.x + w/2, o.y + h/2);
     ctx.rotate(o.rot * Math.PI / 180);
-
     ctx.fillStyle = o.cor;
     if(o.tipo.includes('mesa') || o.tipo.includes('sofa')) ctx.fillStyle = "#fff";
-    
     ctx.fillRect(-w/2, -h/2, w, h);
     ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
     ctx.strokeRect(-w/2, -h/2, w, h);
-
     ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
     ctx.fillText(`${o.tipo.toUpperCase()} (${o.w.toFixed(1)}x${o.h.toFixed(1)}m)`, 0, 5);
-
     if(o === selecionado) {
         ctx.strokeStyle = "red"; ctx.lineWidth = 3; ctx.setLineDash([5, 3]);
         ctx.strokeRect(-w/2 - 5, -h/2 - 5, w + 10, h + 10);
@@ -86,29 +98,20 @@ function desenharItem(o) {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Grade de fundo
+    // Grade
     ctx.strokeStyle = "#f0f0f0"; ctx.lineWidth = 0.5; ctx.setLineDash([]);
     for(let i=0; i<canvas.width; i+=escalaPx) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
     for(let j=0; j<canvas.height; j+=escalaPx) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
 
-    // --- NOVO: DESENHO DO LIMITE DO TERRENO NO PAPEL ---
-    const tLarg = parseFloat(document.getElementById('terr_larg').value) || 0;
-    const tComp = parseFloat(document.getElementById('terr_comp').value) || 0;
-    
-    if (tLarg > 0 && tComp > 0) {
+    // Desenha o limite do terreno se os dados foram "enviados"
+    if (dadosNoPapel.ativo && dadosNoPapel.largura > 0) {
         ctx.save();
-        ctx.strokeStyle = "#ff0000"; // Cor vermelha para o limite
-        ctx.lineWidth = 3;
-        ctx.setLineDash([10, 5]); // Linha tracejada
-        // Desenha o terreno começando em uma margem de segurança (ex: 50px)
-        ctx.strokeRect(50, 50, tLarg * escalaPx, tComp * escalaPx);
-        
-        ctx.fillStyle = "#ff0000";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText(`LIMITE DO TERRENO (${tLarg}m x ${tComp}m)`, 60, 40);
+        ctx.strokeStyle = "#ff0000"; ctx.lineWidth = 3; ctx.setLineDash([10, 5]);
+        ctx.strokeRect(50, 50, dadosNoPapel.largura * escalaPx, dadosNoPapel.comprimento * escalaPx);
+        ctx.fillStyle = "#ff0000"; ctx.font = "bold 14px Arial";
+        ctx.fillText(`LIMITE DO TERRENO (${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m)`, 60, 40);
         ctx.restore();
     }
-    // ---------------------------------------------------
 
     itens.forEach(desenharItem);
     
@@ -119,20 +122,22 @@ function desenhar() {
     ctx.strokeRect(sX, sY, 400, 200);
     
     ctx.fillStyle = "#333"; ctx.font = "12px Segoe UI"; ctx.textAlign = "left";
-    ctx.fillText("CLIENTE: " + (document.getElementById('cli_nome').value || "---"), sX + 20, sY + 40);
-    ctx.fillText("RESP. TÉCNICO: " + (document.getElementById('resp_tec').value || "---"), sX + 20, sY + 75);
+    ctx.fillText("CLIENTE: " + (dadosNoPapel.cliente || "---"), sX + 20, sY + 40);
+    ctx.fillText("RESP. TÉCNICO: " + (dadosNoPapel.tecnico || "---"), sX + 20, sY + 75);
     
     let andarAtual = document.getElementById('sel_andar_view').value;
     let areaTotal = itens.filter(i => i.andar.toString() === andarAtual.toString()).reduce((sum, i) => sum + (i.w * i.h), 0).toFixed(2);
     ctx.fillText("ÁREA PAVIMENTO: " + areaTotal + " m²", sX + 20, sY + 110);
     
-    const larg = document.getElementById('terr_larg').value || "0";
-    const comp = document.getElementById('terr_comp').value || "0";
-    const areaT = document.getElementById('area_terreno').value || "0";
-    ctx.fillText(`TERRENO: ${larg}m x ${comp}m (${areaT} m²)`, sX + 20, sY + 145);
+    if(dadosNoPapel.ativo) {
+        ctx.fillText(`TERRENO: ${dadosNoPapel.largura}m x ${dadosNoPapel.comprimento}m (${dadosNoPapel.area} m²)`, sX + 20, sY + 145);
+    } else {
+        ctx.fillText("TERRENO: ---", sX + 20, sY + 145);
+    }
     ctx.fillText("DATA: " + new Date().toLocaleDateString(), sX + 20, sY + 180);
 }
 
+// ... (Mantenha o restante das funções de mousedown, mousemove e keydown iguais ao anterior)
 canvas.addEventListener('mousedown', (e) => {
     const r = canvas.getBoundingClientRect();
     const escalaRealX = r.width / canvas.width;
@@ -140,7 +145,6 @@ canvas.addEventListener('mousedown', (e) => {
     const mx = (e.clientX - r.left) / escalaRealX;
     const my = (e.clientY - r.top) / escalaRealY;
     const andarVisivel = document.getElementById('sel_andar_view').value.toString();
-    
     selecionado = null;
     for(let i = itens.length - 1; i >= 0; i--) {
         let o = itens[i];
@@ -181,6 +185,5 @@ window.addEventListener('keydown', (e) => {
     desenhar();
 });
 
-function limparTudo() { if(confirm("Reiniciar projeto?")) { itens = []; estoque = []; atualizarEstoqueUI(); desenhar(); } }
+function limparTudo() { if(confirm("Reiniciar projeto?")) { itens = []; estoque = []; dadosNoPapel.ativo = false; atualizarEstoqueUI(); desenhar(); } }
 desenhar();
- 
