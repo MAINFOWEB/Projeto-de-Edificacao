@@ -64,7 +64,7 @@ function adicionarAoEstoque() {
         for(let i = 0; i < qtd; i++) {
             estoque.push({ 
                 id: Date.now() + i, tipo, andar, cor, 
-                x: 100 + (i*10), y: 100 + (i*10), rot: 0, 
+                x: 150 + (i*10), y: 150 + (i*10), rot: 0, 
                 ...biblioteca[tipo] 
             });
         }
@@ -107,7 +107,42 @@ function desenhar() {
     }
 
     desenharSeloTecnico();
-    desenharLegendaAutomatica(); // Chama a legenda no selo
+    desenharLegendaAutomatica();
+
+    // --- NOVA FUNCIONALIDADE: ÁREA TRACEJADA DO LOTE ---
+    const largTerreno = parseFloat(document.getElementById('terr_larg').value) || 0;
+    const compTerreno = parseFloat(document.getElementById('terr_comp').value) || 0;
+
+    if (largTerreno > 0 && compTerreno > 0 && !vistaLateral) {
+        ctx.save();
+        ctx.setLineDash([10, 5]);
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.lineWidth = 2;
+        // Desenha o limite do lote começando em 50,50
+        ctx.strokeRect(50, 50, largTerreno * escalaPx, compTerreno * escalaPx);
+        ctx.setLineDash([]);
+        ctx.fillStyle = "red";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText(`LIMITE DO TERRENO: ${largTerreno}m x ${compTerreno}m`, 50, 40);
+        ctx.restore();
+    }
+
+    // --- NOVA FUNCIONALIDADE: ORIENTAÇÃO NO CORTE LATERAL ---
+    if (vistaLateral) {
+        const yBase = 500;
+        ctx.save();
+        ctx.strokeStyle = "#8B4513";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(50, yBase);
+        ctx.lineTo(850, yBase);
+        ctx.stroke();
+        ctx.fillStyle = "#8B4513";
+        ctx.font = "bold 12px Arial";
+        ctx.fillText("⬅ FRENTE (RUA)", 50, yBase + 20);
+        ctx.fillText("FUNDO ➡", 780, yBase + 20);
+        ctx.restore();
+    }
 
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
         vistaLateral ? renderizarItemCorte(item) : renderizarItemPlanta(item);
@@ -176,10 +211,8 @@ function desenharLegendaAutomatica() {
     ctx.font = "bold 14px Arial";
     ctx.fillText("LEGENDA E QUANTIDADES:", 920, y);
     y += 25;
-
     const contagem = {};
     itens.forEach(it => { contagem[it.nome] = (contagem[it.nome] || 0) + 1; });
-
     Object.keys(contagem).forEach(nome => {
         const it = itens.find(i => i.nome === nome);
         ctx.fillStyle = it.cor;
@@ -197,7 +230,6 @@ canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
     const my = (e.clientY - rect.top) / zoom;
-    // Clique preciso: busca o item que contém as coordenadas do mouse
     selecionado = [...itens].reverse().find(it => {
         const w = it.w * escalaPx; const h = it.h * escalaPx;
         return mx > it.x - w/2 && mx < it.x + w/2 && my > it.y - h/2 && my < it.y + h/2;
