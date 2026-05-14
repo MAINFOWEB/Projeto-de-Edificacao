@@ -1,5 +1,6 @@
 /**
  * Foco: Sincronização Planta Baixa -> Vista Lateral (Corte)
+ * Integrando Identidade Visual: Márcio Tech
  */
 
 const canvas = document.getElementById('mainCanvas');
@@ -15,6 +16,11 @@ let estoque = [];    // Itens na lista de espera (Estoque)
 let selecionado = null;
 let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
+
+// --- ACRÉSCIMO: CARREGAMENTO DA LOGO ---
+const minhaLogo = new Image();
+minhaLogo.src = '1574799294920.png'; 
+minhaLogo.onload = () => desenhar(); // Redesenha quando a logo carregar
 
 // Configurações base dos blocos (Topo vs Frente)
 const biblioteca = {
@@ -69,6 +75,16 @@ function carregarNoPapel(index) {
 function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // --- ACRÉSCIMO: MARCA D'ÁGUA DE AUTENTICIDADE ---
+    ctx.save();
+    ctx.globalAlpha = 0.05; // Bem sutil para o portfólio
+    if (minhaLogo.complete) {
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate(-Math.PI / 4);
+        ctx.drawImage(minhaLogo, -300, -200, 600, 400);
+    }
+    ctx.restore();
+
     // Desenha a Moldura da Folha e o Selo à direita (image_791b97.jpg)
     desenharEstruturaPrancha();
 
@@ -146,12 +162,18 @@ function desenharEstruturaPrancha() {
     ctx.lineTo(1000, 990);
     ctx.stroke();
 
+    // --- ACRÉSCIMO: LOGO NO SELO ---
+    if (minhaLogo.complete) {
+        ctx.drawImage(minhaLogo, 1080, 50, 240, 160);
+    }
+
     // Textos do Selo (Baseado na sua planta original)
+    ctx.fillStyle = "#000";
     ctx.font = "bold 20px Arial";
-    ctx.fillText("PROJETO TÉCNICO", 1020, 50);
+    ctx.fillText("PROJETO TÉCNICO", 1020, 240);
     ctx.font = "14px Arial";
-    ctx.fillText("RESPONSÁVEL: MÁRCIO", 1020, 90);
-    ctx.fillText("ESCALA: 1:50", 1020, 120);
+    ctx.fillText("RESPONSÁVEL: MÁRCIO - BTI", 1020, 270);
+    ctx.fillText("ESCALA: 1:50", 1020, 290);
     
     // Títulos das Vistas
     ctx.font = "bold 16px Arial";
