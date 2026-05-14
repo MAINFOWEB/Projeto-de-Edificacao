@@ -10,7 +10,6 @@
 <div id="sidebar">
     <h3 class="titulo-topo">Projeto de <span class="azul">Edificação</span></h3>
     
-    <!-- COR DO CÔMODO COM PREVIEW -->
     <div class="bloco-config">
         <label>🎨 COR DO CÔMODO</label>
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -19,7 +18,6 @@
         </div>
     </div>
 
-    <!-- DADOS TÉCNICOS COM LARGURA x COMPRIMENTO -->
     <div class="bloco-config">
         <label>📋 DADOS TÉCNICOS</label>
         <input type="text" id="cli_nome" placeholder="Nome do Cliente">
@@ -29,8 +27,6 @@
             <span style="color: #eee; align-self: center;">x</span>
             <input type="number" id="terr_comp" placeholder="Comp. (m)">
         </div>
-        
-        <!-- BOTÃO DE DIAGRAMAÇÃO -->
         <button onclick="enviarDadosParaPapel()" style="background-color: #00d2ff; color: #000; font-weight: bold; margin-top: 10px; width: 100%; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
             ENVIAR PARA O PAPEL
         </button>
@@ -51,15 +47,15 @@
             <option value="2">Ver 2º Andar</option>
         </select>
     </div>
-    <div class="section">
-    <button onclick="desenharVistaLateral()" style="background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold;">
-        📐 VER VISTA LATERAL (2D)
-    </button>
-    <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer;">
-    ⬅️ VOLTAR PARA PLANTA
-</button>
 
-</div>
+    <div class="section">
+        <button onclick="desenharVistaLateral()" style="background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold;">
+            📐 VER VISTA LATERAL (2D)
+        </button>
+        <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer;">
+            ⬅️ VOLTAR PARA PLANTA
+        </button>
+    </div>
 
     <div class="section">
         <label>📐 COMPONENTE</label>
@@ -95,10 +91,20 @@
                 <option value="janela_basculante">Janela Basculante</option>
             </optgroup>
         </select>
-        <button class="btn-add" onclick="adicionarAoEstoque()">MANDAR PARA ESTOQUE</button>
+        <div style="display: flex; gap: 5px; margin-top: 5px;">
+            <input type="number" id="qtd_componente" value="1" min="1" style="width: 60px; padding: 5px;">
+            <button class="btn-add" onclick="adicionarAoEstoque()" style="flex: 1;">MANDAR PARA ESTOQUE</button>
+        </div>
     </div>
 
-    <!-- BOTÕES DE AÇÃO -->
+    <div class="section" style="font-size: 11px; line-height: 1.4; color: #ccc;">
+        <label>📖 MANUAL DE COMANDOS</label>
+        • <b>Mouse:</b> Arraste para mover<br>
+        • <b>R:</b> Girar item selecionado<br>
+        • <b>DEL:</b> Apagar item<br>
+        • <b>SETAS:</b> Redimensionar (+/- 0.1m)
+    </div>
+
     <div class="section" style="margin-top: 20px;">
         <button class="btn-print" onclick="window.print()" style="width: 100%; margin-bottom: 10px;">🖨️ GERAR PDF / IMPRIMIR</button>
         <button class="btn-reset" onclick="limparTudo()" style="width: 100%;">REINICIAR TUDO</button>
@@ -106,8 +112,8 @@
 </div>
 
 <div class="zoom-controls">
-    <button class="zoom-btn" onclick="ajustarZoom(0.1, this)">+</button>
-    <button class="zoom-btn" onclick="ajustarZoom(-0.1, this)">-</button>
+    <button class="zoom-btn" onclick="ajustarZoom(0.1)">+</button>
+    <button class="zoom-btn" onclick="ajustarZoom(-0.1)">-</button>
 </div>
 
 <div id="canvas-container">
@@ -117,11 +123,6 @@
 <div id="inventory">
     <h4>📦 ESTOQUE</h4>
     <div id="lista-estoque"></div>
-    <div class="info-uso">
-        <b>R</b>: Girar | <b>DEL</b>: Apagar<br>
-        <b>SETAS</b>: Alterar Tamanho<br>
-        Clique e arraste para mover.
-    </div>
 </div>
 
 <script src="script.js"></script>
