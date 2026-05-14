@@ -1,6 +1,7 @@
 const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 
+// Configurações Globais
 let escalaPx = 30; 
 let zoom = 1.0;
 let itens = [];      
@@ -10,6 +11,7 @@ let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
 
+// --- 1. CARREGAMENTO DE ASSETS ---
 const imagens = {
     logo: new Image(),
     mesa_4: new Image(), mesa_6: new Image(), mesa_8: new Image(),
@@ -27,6 +29,7 @@ imagens.sofa_3.src = 'assets/img/sofa_3l.png';
 
 Object.values(imagens).forEach(img => img.onload = () => desenhar());
 
+// --- 2. BIBLIOTECA DE COMPONENTES ---
 const biblioteca = {
     'suite_master': { nome: 'Suíte Master + Closet', w: 6.0, h: 5.0, alt: 2.8 },
     'suite_comum':  { nome: 'Suíte Comum', w: 4.0, h: 3.5, alt: 2.8 },
@@ -51,6 +54,8 @@ const biblioteca = {
     'janela_dupla':  { nome: 'Janela Dupla', w: 1.5, h: 0.1, alt: 1.2, usaImg: true },
     'janela_basculante': { nome: 'Janela Basc.', w: 0.6, h: 0.1, alt: 0.6, usaImg: true }
 };
+
+// --- 3. FUNÇÕES DE INTERFACE ---
 
 function enviarDadosParaPapel() { desenhar(); }
 
@@ -94,11 +99,14 @@ function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
 function ajustarZoom(delta) { zoom = Math.max(0.5, Math.min(2, zoom + delta)); desenhar(); }
 
+// --- 4. MOTOR DE RENDERIZAÇÃO ---
+
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
+    // Marca d'água
     if (imagens.logo.complete) {
         ctx.save();
         ctx.globalAlpha = 0.07;
@@ -109,25 +117,31 @@ function desenhar() {
     desenharSeloTecnico();
     desenharLegendaAutomatica();
 
-    // --- NOVA FUNCIONALIDADE: ÁREA TRACEJADA DO LOTE ---
+    // --- ÁREA TRACEJADA CENTRALIZADA ---
     const largTerreno = parseFloat(document.getElementById('terr_larg').value) || 0;
     const compTerreno = parseFloat(document.getElementById('terr_comp').value) || 0;
 
     if (largTerreno > 0 && compTerreno > 0 && !vistaLateral) {
+        const larguraPx = largTerreno * escalaPx;
+        const comprimentoPx = compTerreno * escalaPx;
+
+        // Centraliza na área útil (antes do selo que começa em 900)
+        const posX = (900 - larguraPx) / 2;
+        const posY = (800 - comprimentoPx) / 2;
+
         ctx.save();
         ctx.setLineDash([10, 5]);
-        ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.6)";
         ctx.lineWidth = 2;
-        // Desenha o limite do lote começando em 50,50
-        ctx.strokeRect(50, 50, largTerreno * escalaPx, compTerreno * escalaPx);
+        ctx.strokeRect(posX, posY, larguraPx, comprimentoPx);
         ctx.setLineDash([]);
         ctx.fillStyle = "red";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText(`LIMITE DO TERRENO: ${largTerreno}m x ${compTerreno}m`, 50, 40);
+        ctx.font = "bold 14px Arial";
+        ctx.fillText(`LIMITE DO TERRENO: ${largTerreno}m x ${compTerreno}m`, posX, posY - 10);
         ctx.restore();
     }
 
-    // --- NOVA FUNCIONALIDADE: ORIENTAÇÃO NO CORTE LATERAL ---
+    // --- ORIENTAÇÃO NO CORTE LATERAL ---
     if (vistaLateral) {
         const yBase = 500;
         ctx.save();
@@ -225,6 +239,8 @@ function desenharLegendaAutomatica() {
         y += 22;
     });
 }
+
+// --- 5. EVENTOS ---
 
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
