@@ -1,6 +1,5 @@
 /**
  * Foco: Sincronização Planta Baixa -> Vista Lateral (Corte)
- * Integrando Identidade Visual: Márcio Tech
  */
 
 const canvas = document.getElementById('mainCanvas');
