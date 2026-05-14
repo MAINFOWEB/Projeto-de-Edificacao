@@ -123,7 +123,7 @@ function desenhar() {
     // Marca d'água de fundo (image_77d97d.png)
     if (imagens.logo.complete) {
         ctx.save();
-        ctx.globalAlpha = 0.05;
+        ctx.globalAlpha = 0.07;
         ctx.drawImage(imagens.logo, 200, 150, 600, 400);
         ctx.restore();
     }
