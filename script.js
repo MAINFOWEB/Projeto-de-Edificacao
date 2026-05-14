@@ -21,6 +21,7 @@ const imagens = {
     janela_dupla: new Image(), janela_basculante: new Image()
 };
 
+// Caminho da sua marca d'água
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens.mesa_4.src = 'assets/img/mesa_4c.png';
 imagens.mesa_6.src = 'assets/img/mesa_6c.png';
@@ -104,25 +105,33 @@ function desenhar() {
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
+    // --- AJUSTE: MARCA D'ÁGUA (0.07 OPACIDADE) ---
+    if (imagens.logo.complete) {
+        ctx.save();
+        ctx.globalAlpha = 0.07; // Reconfigurado conforme solicitado
+        // Centralizado na área do papel (900x800)
+        ctx.drawImage(imagens.logo, 150, 150, 600, 500);
+        ctx.restore();
+    }
+
     // 1. Moldura e Selo
     desenharSeloTecnico();
     desenharLegendaAutomatica();
 
-    // 2. Cálculo da Escala Inteligente (Garante que caiba na folha)
+    // 2. Cálculo da Escala Inteligente
     const m_larg = parseFloat(document.getElementById('terr_larg').value) || 0;
     const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
 
-    escalaAtualUsada = escalaPx; // Inicia com 30
+    escalaAtualUsada = escalaPx;
 
     if (m_larg > 0 && m_comp > 0 && !vistaLateral) {
-        const areaUtilW = 860; // Largura disponível antes do selo
-        const areaUtilH = 740; // Altura disponível na folha
+        const areaUtilW = 860;
+        const areaUtilH = 740;
 
-        // Se o terreno for maior que a área útil, reduz a escala proporcionalmente
         if ((m_larg * escalaAtualUsada) > areaUtilW || (m_comp * escalaAtualUsada) > areaUtilH) {
             const ratioW = areaUtilW / m_larg;
             const ratioH = areaUtilH / m_comp;
-            escalaAtualUsada = Math.min(ratioW, ratioH) * 0.95; // 5% de margem extra
+            escalaAtualUsada = Math.min(ratioW, ratioH) * 0.95;
         }
 
         const px_w = m_larg * escalaAtualUsada;
@@ -156,7 +165,7 @@ function desenhar() {
         ctx.restore();
     }
 
-    // 4. Renderizar Itens com a nova escala
+    // 4. Renderizar Itens
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
         vistaLateral ? renderizarItemCorte(item) : renderizarItemPlanta(item);
     });
@@ -207,7 +216,7 @@ function desenharSeloTecnico() {
     ctx.save();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
-    ctx.strokeRect(10, 10, 1180, 780); // Tamanho da Folha
+    ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
     if (imagens.logo.complete) ctx.drawImage(imagens.logo, 950, 30, 180, 120);
     ctx.fillStyle = "#000";
@@ -281,6 +290,4 @@ window.onkeydown = (e) => {
     desenhar();
 };
 
-desenhar();
-// Início
 desenhar();
