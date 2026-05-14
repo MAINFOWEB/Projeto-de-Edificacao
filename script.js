@@ -10,6 +10,7 @@ let selecionado = null;
 let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
+let escalaAtualUsada = 30; // Variável para manter os itens na mesma escala do lote
 
 // --- 1. CARREGAMENTO DE ASSETS ---
 const imagens = {
@@ -55,8 +56,7 @@ const biblioteca = {
     'janela_basculante': { nome: 'Janela Basc.', w: 0.6, h: 0.1, alt: 0.6, usaImg: true }
 };
 
-// --- 3. FUNÇÕES DE INTERFACE ---
-
+// --- 3. FUNÇÕES DE APOIO ---
 function enviarDadosParaPapel() { desenhar(); }
 
 function adicionarAoEstoque() {
@@ -69,7 +69,7 @@ function adicionarAoEstoque() {
         for(let i = 0; i < qtd; i++) {
             estoque.push({ 
                 id: Date.now() + i, tipo, andar, cor, 
-                x: 150 + (i*10), y: 150 + (i*10), rot: 0, 
+                x: 200 + (i*10), y: 200 + (i*10), rot: 0, 
                 ...biblioteca[tipo] 
             });
         }
@@ -97,53 +97,56 @@ function atualizarListaEstoque() {
 function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
-function ajustarZoom(delta) { zoom = Math.max(0.5, Math.min(2, zoom + delta)); desenhar(); }
+function ajustarZoom(delta) { zoom = Math.max(0.3, Math.min(2, zoom + delta)); desenhar(); }
 
-// --- 4. MOTOR DE RENDERIZAÇÃO ---
-
+// --- 4. FUNÇÃO PRINCIPAL DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
-    // Marca d'água
-    if (imagens.logo.complete) {
-        ctx.save();
-        ctx.globalAlpha = 0.07;
-        ctx.drawImage(imagens.logo, 200, 150, 600, 400);
-        ctx.restore();
-    }
-
+    // 1. Desenha a Moldura da Folha e Selo
     desenharSeloTecnico();
     desenharLegendaAutomatica();
 
-    // --- ÁREA TRACEJADA CENTRALIZADA ---
+    // 2. Cálculo de Escala e Lote
     const largTerreno = parseFloat(document.getElementById('terr_larg').value) || 0;
     const compTerreno = parseFloat(document.getElementById('terr_comp').value) || 0;
 
+    // Resetamos a escala padrão, mas ajustamos se o terreno for gigante
+    escalaAtualUsada = escalaPx; 
+    
     if (largTerreno > 0 && compTerreno > 0 && !vistaLateral) {
-        const larguraPx = largTerreno * escalaPx;
-        const comprimentoPx = compTerreno * escalaPx;
+        // Se o terreno (metros * escala) for maior que a área útil (800px), reduzimos a escala
+        const margemSeguranca = 700;
+        if ((compTerreno * escalaAtualUsada) > margemSeguranca || (largTerreno * escalaAtualUsada) > 850) {
+            const fatorH = margemSeguranca / compTerreno;
+            const fatorW = 850 / largTerreno;
+            escalaAtualUsada = Math.min(fatorH, fatorW);
+        }
 
-        // Centraliza na área útil (antes do selo que começa em 900)
+        const larguraPx = largTerreno * escalaAtualUsada;
+        const comprimentoPx = compTerreno * escalaAtualUsada;
+
+        // Centraliza na área antes do selo (900px)
         const posX = (900 - larguraPx) / 2;
         const posY = (800 - comprimentoPx) / 2;
 
         ctx.save();
         ctx.setLineDash([10, 5]);
-        ctx.strokeStyle = "rgba(255, 0, 0, 0.6)";
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.7)";
         ctx.lineWidth = 2;
         ctx.strokeRect(posX, posY, larguraPx, comprimentoPx);
         ctx.setLineDash([]);
         ctx.fillStyle = "red";
         ctx.font = "bold 14px Arial";
-        ctx.fillText(`LIMITE DO TERRENO: ${largTerreno}m x ${compTerreno}m`, posX, posY - 10);
+        ctx.fillText(`LOTE: ${largTerreno}m x ${compTerreno}m (Escala Ajustada)`, posX, posY - 10);
         ctx.restore();
     }
 
-    // --- ORIENTAÇÃO NO CORTE LATERAL ---
+    // 3. Orientação no Corte Lateral
     if (vistaLateral) {
-        const yBase = 500;
+        const yBase = 550;
         ctx.save();
         ctx.strokeStyle = "#8B4513";
         ctx.lineWidth = 4;
@@ -158,14 +161,15 @@ function desenhar() {
         ctx.restore();
     }
 
+    // 4. Renderizar Itens
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
         vistaLateral ? renderizarItemCorte(item) : renderizarItemPlanta(item);
     });
 }
 
 function renderizarItemPlanta(item) {
-    const w = item.w * escalaPx;
-    const h = item.h * escalaPx;
+    const w = item.w * escalaAtualUsada; // Usa a escala calculada no desenho do lote
+    const h = item.h * escalaAtualUsada;
     ctx.save();
     ctx.translate(item.x, item.y);
     ctx.rotate(item.rot * Math.PI / 180);
@@ -188,9 +192,9 @@ function renderizarItemPlanta(item) {
 }
 
 function renderizarItemCorte(item) {
-    const w = item.w * escalaPx;
-    const alt = item.alt * escalaPx;
-    const yBase = 500;
+    const w = item.w * escalaAtualUsada;
+    const alt = item.alt * escalaAtualUsada;
+    const yBase = 550;
     ctx.fillStyle = item.cor;
     ctx.fillRect(item.x - w/2, yBase - alt, w, alt);
     ctx.strokeStyle = "#000";
@@ -205,11 +209,17 @@ function desenharSeloTecnico() {
     const resp = document.getElementById('resp_tec').value || "MÁRCIO - BTI";
     const larg = document.getElementById('terr_larg').value || "0";
     const comp = document.getElementById('terr_comp').value || "0";
+    
+    ctx.save();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
+    // Borda da Folha A1/A2 proporcional
     ctx.strokeRect(10, 10, 1180, 780);
+    // Linha divisória do Selo
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
+    
     if (imagens.logo.complete) ctx.drawImage(imagens.logo, 950, 30, 180, 120);
+    
     ctx.fillStyle = "#000";
     ctx.font = "bold 18px Arial";
     ctx.fillText("PROJETO TÉCNICO", 920, 180);
@@ -217,10 +227,12 @@ function desenharSeloTecnico() {
     ctx.fillText(`CLIENTE: ${cli.toUpperCase()}`, 920, 210);
     ctx.fillText(`RESP.: ${resp.toUpperCase()}`, 920, 230);
     ctx.fillText(`TERRENO: ${larg}m x ${comp}m`, 920, 250);
+    ctx.restore();
 }
 
 function desenharLegendaAutomatica() {
     let y = 300;
+    ctx.save();
     ctx.fillStyle = "#000";
     ctx.font = "bold 14px Arial";
     ctx.fillText("LEGENDA E QUANTIDADES:", 920, y);
@@ -238,16 +250,16 @@ function desenharLegendaAutomatica() {
         ctx.fillText(`${nome}: ${contagem[nome]} un.`, 945, y);
         y += 22;
     });
+    ctx.restore();
 }
 
-// --- 5. EVENTOS ---
-
+// --- 5. EVENTOS DE MOUSE E TECLADO ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
     const my = (e.clientY - rect.top) / zoom;
     selecionado = [...itens].reverse().find(it => {
-        const w = it.w * escalaPx; const h = it.h * escalaPx;
+        const w = it.w * escalaAtualUsada; const h = it.h * escalaAtualUsada;
         return mx > it.x - w/2 && mx < it.x + w/2 && my > it.y - h/2 && my < it.y + h/2;
     });
     if (selecionado) {
@@ -281,4 +293,5 @@ window.onkeydown = (e) => {
     desenhar();
 };
 
+// Início
 desenhar();
