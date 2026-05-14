@@ -123,17 +123,34 @@ function desenhar() {
 function desenharVistaLateral() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     let yChao = 600;
-    const peDireito = 2.8 * escalaPx;
-    ctx.strokeStyle = "#333"; ctx.lineWidth = 5; ctx.setLineDash([]);
+    const peDireito = 2.8 * escalaPx; // Altura do andar
+
+    // Linha do Piso
+    ctx.strokeStyle = "#333"; ctx.lineWidth = 5;
     ctx.beginPath(); ctx.moveTo(50, yChao); ctx.lineTo(1100, yChao); ctx.stroke();
 
     itens.filter(i => !i.isMobilia).forEach((o) => {
         const hAndar = (o.andar === "1") ? peDireito : peDireito * 2;
-        ctx.fillStyle = o.cor;
-        ctx.globalAlpha = 0.6;
-        const alturaBloco = o.isPorta ? peDireito * 0.7 : peDireito;
-        ctx.fillRect(o.x, yChao - hAndar, o.w * escalaPx, alturaBloco);
-        ctx.strokeRect(o.x, yChao - hAndar, o.w * escalaPx, alturaBloco);
+        const baseCalculo = yChao - hAndar;
+
+        if (o.isEscada) {
+            // Desenha a escada de lado como um triângulo/rampa (Representação técnica de corte)
+            ctx.fillStyle = "#ccc";
+            ctx.beginPath();
+            ctx.moveTo(o.x, yChao - (o.andar === "2" ? peDireito : 0)); // Base da escada
+            ctx.lineTo(o.x + (o.w * escalaPx), yChao - hAndar); // Topo da escada
+            ctx.lineTo(o.x, yChao - hAndar); // Fecha o bloco
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            // Desenho normal de paredes e portas
+            ctx.fillStyle = o.cor;
+            ctx.globalAlpha = 0.6;
+            const alturaBloco = o.isPorta ? peDireito * 0.7 : peDireito;
+            ctx.fillRect(o.x, baseCalculo, o.w * escalaPx, alturaBloco);
+            ctx.strokeRect(o.x, baseCalculo, o.w * escalaPx, alturaBloco);
+        }
     });
     ctx.globalAlpha = 1.0;
 }
