@@ -72,11 +72,12 @@ imagens["sala04"].src = 'assets/img/sala04.png';
 imagens["sofa03"].src = 'assets/img/sofa03.png';
 imagens["sofa04"].src = 'assets/img/sofa04.png';
 
+// Mantendo o listener para redesenhar quando as imagens carregarem
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
 });
 
-// --- 2. BIBLIOTECA (INCLUINDO NOVOS CÔMODOS) ---
+// --- 2. BIBLIOTECA ---
 const biblioteca = {
     'suite_master':    { nome: 'Suíte Master', w: 6.0, h: 5.0, alt: 2.8 },
     'suite_normal':    { nome: 'Suíte Normal', w: 4.0, h: 3.5, alt: 2.8 },
@@ -155,7 +156,7 @@ function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function enviarDadosParaPapel() { desenhar(); }
 
-// --- 4. FUNÇÕES DE DESENHO ---
+// --- 4. FUNÇÕES DE DESENHO (CORRIGIDO PARA EVITAR QUADRADOS) ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
@@ -186,9 +187,13 @@ function desenhar() {
             ctx.rotate(item.rot * Math.PI / 180);
         }
 
-        if (item.usaImg && imagens[item.tipo]?.complete && !vistaLateral) {
-            ctx.drawImage(imagens[item.tipo], -w/2, -h/2, w, h);
+        const imgObj = imagens[item.tipo];
+        
+        // VERIFICAÇÃO TÉCNICA: Só desenha se for asset de imagem E a imagem tiver carregado com sucesso
+        if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0 && !vistaLateral) {
+            ctx.drawImage(imgObj, -w/2, -h/2, w, h);
         } else {
+            // Caso contrário, usa cor sólida (sem imagem quebrada)
             ctx.fillStyle = item.cor || "#777";
             ctx.globalAlpha = 0.6;
             ctx.fillRect(-w/2, -h/2, w, h);
@@ -216,6 +221,7 @@ function desenhar() {
     }
 }
 
+// --- RESTANTE DAS FUNÇÕES (INALTERADO) ---
 function desenharEscalaTerreno() {
     const m_larg = parseFloat(document.getElementById('terr_larg').value) || 0;
     const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
@@ -281,7 +287,6 @@ function desenharSeloTecnico() {
     ctx.restore();
 }
 
-// --- 5. EVENTOS ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
