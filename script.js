@@ -100,9 +100,14 @@ function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desen
 // FUNÇÃO DE ZOOM CORRIGIDA PARA ROLAGEM
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
-    // Redimensiona o Canvas fisicamente para a div criar as barras
+    
+    // Atualiza o tamanho visual do canvas
     canvas.style.width = (1200 * zoom) + "px";
     canvas.style.height = (800 * zoom) + "px";
+    
+    // Força a atualização do layout para as barras de rolagem
+    document.getElementById('canvas-container').scrollLeft = document.getElementById('canvas-container').scrollLeft;
+
     desenhar(); 
 }
 
