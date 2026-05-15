@@ -1,7 +1,7 @@
 const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 
-// Configurações Globais
+// --- CONFIGURAÇÕES GLOBAIS ---
 let escalaPx = 30; 
 let zoom = 1.0;
 let itens = [];      
@@ -12,7 +12,7 @@ let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
 let escalaAtualUsada = 30; 
 
-// --- 1. CARREGAMENTO DE ASSETS ---
+// --- 1. CARREGAMENTO DE ASSETS (IMAGENS) ---
 const imagens = {
     logo: new Image(),
     mesa_4: new Image(), mesa_6: new Image(), mesa_8: new Image(),
@@ -21,20 +21,25 @@ const imagens = {
     janela_dupla: new Image(), janela_basculante: new Image()
 };
 
-// Caminhos das imagens
+// Definição dos caminhos - Certifique-se que os arquivos existem nestas pastas
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens.mesa_4.src = 'assets/img/mesa_4c.png';
 imagens.mesa_6.src = 'assets/img/mesa_6c.png';
 imagens.mesa_8.src = 'assets/img/mesa_8c.png';
 imagens.sofa_2.src = 'assets/img/sofa_2l.png';
 imagens.sofa_3.src = 'assets/img/sofa_3l.png';
-imagens.porta_simples.src = 'assets/img/porta_simples.png'; // Adicionado
-imagens.porta_dupla.src = 'assets/img/porta_dupla.png';     // Adicionado
-imagens.janela_dupla.src = 'assets/img/janela_dupla.png';   // Adicionado
-imagens.janela_basculante.src = 'assets/img/janela_basculante.png'; // Adicionado
+imagens.porta_simples.src = 'assets/img/porta_simples.png';
+imagens.porta_dupla.src = 'assets/img/porta_dupla.png';
+imagens.janela_dupla.src = 'assets/img/janela_dupla.png';
+imagens.janela_basculante.src = 'assets/img/janela_basculante.png';
 
-Object.values(imagens).forEach(img => img.onload = () => desenhar());
+// Redesenha o canvas assim que cada imagem terminar de carregar
+Object.values(imagens).forEach(img => {
+    img.onload = () => desenhar();
+    img.onerror = () => console.warn("Aviso: Falha ao carregar imagem: " + img.src);
+});
 
+// --- 2. BIBLIOTECA DE COMPONENTES ---
 const biblioteca = {
     'suite_master': { nome: 'Suíte Master + Closet', w: 6.0, h: 5.0, alt: 2.8 },
     'suite_comum':  { nome: 'Suíte Comum', w: 4.0, h: 3.5, alt: 2.8 },
@@ -60,7 +65,7 @@ const biblioteca = {
     'janela_basculante': { nome: 'Janela Basc.', w: 0.6, h: 0.1, alt: 0.6, usaImg: true }
 };
 
-// --- 2. FUNÇÕES DE INTERFACE ---
+// --- 3. FUNÇÕES DE INTERFACE ---
 function enviarDadosParaPapel() { desenhar(); }
 
 function adicionarAoEstoque() {
@@ -72,7 +77,8 @@ function adicionarAoEstoque() {
     if (biblioteca[tipo]) {
         for(let i = 0; i < qtd; i++) {
             estoque.push({ 
-                id: Date.now() + i, tipo, andar, cor, 
+                id: Date.now() + i + Math.random(), 
+                tipo, andar, cor, 
                 x: 300 + (i*15), y: 300 + (i*15), rot: 0, 
                 ...biblioteca[tipo] 
             });
@@ -102,22 +108,16 @@ function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
 
-// FUNÇÃO DE ZOOM - CORREÇÃO DE PERFORMANCE
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
-    
-    // Atualiza o tamanho visual do canvas para disparar o scroll do CSS
     canvas.style.width = (1200 * zoom) + "px";
     canvas.style.height = (800 * zoom) + "px";
-    
     desenhar(); 
 }
 
-// --- 3. FUNÇÃO PRINCIPAL DE DESENHO ---
+// --- 4. LÓGICA DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
-    
-    // Reseta a escala para desenhar limpo
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
@@ -139,13 +139,11 @@ function desenhar() {
     if (m_larg > 0 && m_comp > 0 && !vistaLateral) {
         const areaUtilW = 860;
         const areaUtilH = 740;
-
         if ((m_larg * escalaAtualUsada) > areaUtilW || (m_comp * escalaAtualUsada) > areaUtilH) {
             const ratioW = areaUtilW / m_larg;
             const ratioH = areaUtilH / m_comp;
             escalaAtualUsada = Math.min(ratioW, ratioH) * 0.95;
         }
-
         const px_w = m_larg * escalaAtualUsada;
         const px_h = m_comp * escalaAtualUsada;
         const ox = (900 - px_w) / 2;
@@ -156,10 +154,9 @@ function desenhar() {
         ctx.strokeStyle = "red";
         ctx.lineWidth = 2;
         ctx.strokeRect(ox, oy, px_w, px_h);
-        ctx.setLineDash([]);
         ctx.fillStyle = "red";
         ctx.font = "bold 14px Arial";
-        ctx.fillText(`LOTE: ${m_larg}m x ${m_comp}m (Escala: 1:${Math.round(100 * (30/escalaAtualUsada))})`, ox, oy - 10);
+        ctx.fillText(`LOTE: ${m_larg}m x ${m_comp}m (Escala 1:${Math.round(100 * (30/escalaAtualUsada))})`, ox, oy - 10);
         ctx.restore();
     }
 
@@ -169,10 +166,6 @@ function desenhar() {
         ctx.strokeStyle = "#8B4513";
         ctx.lineWidth = 4;
         ctx.beginPath(); ctx.moveTo(50, yBase); ctx.lineTo(850, yBase); ctx.stroke();
-        ctx.fillStyle = "#8B4513";
-        ctx.font = "bold 12px Arial";
-        ctx.fillText("⬅ FRENTE (RUA)", 50, yBase + 20);
-        ctx.fillText("FUNDO ➡", 780, yBase + 20);
         ctx.restore();
     }
 
@@ -188,8 +181,10 @@ function renderizarItemPlanta(item) {
     ctx.translate(item.x, item.y);
     ctx.rotate(item.rot * Math.PI / 180);
     
-    if (item.usaImg && imagens[item.tipo] && imagens[item.tipo].complete) {
-        ctx.drawImage(imagens[item.tipo], -w/2, -h/2, w, h);
+    const imgObj = imagens[item.tipo];
+    // CORREÇÃO: Verifica se a imagem existe, carregou e não tem erro antes de desenhar
+    if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
+        ctx.drawImage(imgObj, -w/2, -h/2, w, h);
     } else {
         ctx.fillStyle = item.cor;
         ctx.globalAlpha = 0.7;
@@ -226,15 +221,12 @@ function desenharSeloTecnico() {
     const resp = document.getElementById('resp_tec').value || "MÁRCIO - BTI";
     const larg = document.getElementById('terr_larg').value || "0";
     const comp = document.getElementById('terr_comp').value || "0";
-    
     ctx.save();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
-    
     if (imagens.logo.complete) ctx.drawImage(imagens.logo, 950, 30, 180, 120);
-    
     ctx.fillStyle = "#000";
     ctx.font = "bold 18px Arial";
     ctx.fillText("PROJETO TÉCNICO", 920, 180);
@@ -256,6 +248,7 @@ function desenharLegendaAutomatica() {
     itens.forEach(it => { contagem[it.nome] = (contagem[it.nome] || 0) + 1; });
     Object.keys(contagem).forEach(nome => {
         const it = itens.find(i => i.nome === nome);
+        if(!it) return;
         ctx.fillStyle = it.cor;
         ctx.fillRect(920, y - 12, 15, 15);
         ctx.strokeStyle = "#000"; ctx.strokeRect(920, y - 12, 15, 15);
@@ -266,17 +259,19 @@ function desenharLegendaAutomatica() {
     ctx.restore();
 }
 
-// EVENTOS COM HITBOX MELHORADA
+// --- 5. EVENTOS DE INTERAÇÃO ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) / (rect.width / 1200);
-    const my = (e.clientY - rect.top) / (rect.height / 800);
+    const ratioX = 1200 / rect.width;
+    const ratioY = 800 / rect.height;
+    const mx = (e.clientX - rect.left) * ratioX;
+    const my = (e.clientY - rect.top) * ratioY;
     
     selecionado = [...itens].reverse().find(it => {
         const w = it.w * escalaAtualUsada; 
         const h = it.h * escalaAtualUsada;
-        const clickW = Math.max(w, 25);
-        const clickH = Math.max(h, 25);
+        const clickW = Math.max(w, 30);
+        const clickH = Math.max(h, 30);
         return mx > it.x - clickW/2 && mx < it.x + clickW/2 && my > it.y - clickH/2 && my < it.y + clickH/2;
     });
     
@@ -291,10 +286,10 @@ canvas.onmousedown = (e) => {
 canvas.onmousemove = (e) => {
     if (arrastando && selecionado) {
         const rect = canvas.getBoundingClientRect();
-        const mx = (e.clientX - rect.left) / (rect.width / 1200);
-        const my = (e.clientY - rect.top) / (rect.height / 800);
-        selecionado.x = mx - mouseOffset.x;
-        selecionado.y = my - mouseOffset.y;
+        const ratioX = 1200 / rect.width;
+        const ratioY = 800 / rect.height;
+        selecionado.x = (e.clientX - rect.left) * ratioX - mouseOffset.x;
+        selecionado.y = (e.clientY - rect.top) * ratioY - mouseOffset.y;
         desenhar();
     }
 };
@@ -305,7 +300,10 @@ window.onkeydown = (e) => {
     if (!selecionado) return;
     const k = e.key.toLowerCase();
     if (k === 'r') selecionado.rot += 15;
-    if (k === 'delete') { itens = itens.filter(it => it !== selecionado); selecionado = null; }
+    if (k === 'delete' || k === 'backspace') { 
+        itens = itens.filter(it => it !== selecionado); 
+        selecionado = null; 
+    }
     if (e.key === 'ArrowUp') selecionado.h += 0.1;
     if (e.key === 'ArrowDown') selecionado.h -= 0.1;
     if (e.key === 'ArrowRight') selecionado.w += 0.1;
@@ -313,5 +311,5 @@ window.onkeydown = (e) => {
     desenhar();
 };
 
-// Inicialização
+// Inicia o desenho
 desenhar();
