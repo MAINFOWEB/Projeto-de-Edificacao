@@ -32,9 +32,9 @@ const imagens = {
     "piscina04": new Image(),
     "piscina05": new Image(),
     "piscina06": new Image(),
-    "Porta direita 90D-13": new Image(),
-    "porta": new Image(),
-    "Porta-Sanfonada": new Image(),
+    "Porta03": new Image(),
+    "porta01": new Image(),
+    "Porta02": new Image(),
     "sala01": new Image(),
     "sala02": new Image(),
     "sala03": new Image(),
@@ -62,9 +62,9 @@ imagens["piscina03"].src = 'assets/img/piscina03.png';
 imagens["piscina04"].src = 'assets/img/piscina04.png';
 imagens["piscina05"].src = 'assets/img/piscina05.png';
 imagens["piscina06"].src = 'assets/img/piscina06.png';
-imagens["Porta direita 90D-13"].src = 'assets/img/Porta direita 90D-13.png';
-imagens["porta"].src = 'assets/img/porta.png';
-imagens["Porta-Sanfonada"].src = 'assets/img/Porta-Sanfonada.png';
+imagens["Porta03"].src = 'assets/img/Porta03.png';
+imagens["porta01"].src = 'assets/img/porta01.png';
+imagens["Porta02"].src = 'assets/img/Porta02.png';
 imagens["sala01"].src = 'assets/img/sala01.png';
 imagens["sala02"].src = 'assets/img/sala02.png';
 imagens["sala03"].src = 'assets/img/sala03.png';
@@ -108,9 +108,9 @@ const biblioteca = {
     'piscina04': { nome: 'piscina04', w: 4.5, h: 4.5, alt: 1.4, usaImg: true },
     'piscina05': { nome: 'piscina05', w: 3.5, h: 7.0, alt: 1.4, usaImg: true },
     'piscina06': { nome: 'piscina06', w: 5.5, h: 5.5, alt: 1.4, usaImg: true },
-    'Porta direita 90D-13': { nome: 'Porta direita 90D-13', w: 0.9, h: 0.1, alt: 2.1, usaImg: true },
-    'porta': { nome: 'porta', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
-    'Porta-Sanfonada': { nome: 'Porta-Sanfonada', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'Porta03': { nome: 'Porta03', w: 0.9, h: 0.1, alt: 2.1, usaImg: true },
+    'porta01': { nome: 'porta01', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'Porta02': { nome: 'Porta02', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
     'sala01': { nome: 'sala01', w: 4.0, h: 4.0, alt: 1.0, usaImg: true },
     'sala02': { nome: 'sala02', w: 3.5, h: 3.5, alt: 1.0, usaImg: true },
     'sala03': { nome: 'sala03', w: 4.2, h: 4.2, alt: 1.0, usaImg: true },
