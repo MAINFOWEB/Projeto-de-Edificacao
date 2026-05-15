@@ -26,7 +26,6 @@ const imagens = {
 };
 
 imagens.logo.src = 'assets/img/1574799294920.png';
-// Adicione os caminhos das outras imagens se necessário
 
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
@@ -111,7 +110,7 @@ function desenhar() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Marca d'água centralizada e proporcional
+    // Marca d'água central
     if (imagens.logo.complete) {
         ctx.save();
         ctx.globalAlpha = 0.05;
@@ -123,16 +122,22 @@ function desenhar() {
     desenharSeloTecnico();
     desenharEscalaTerreno();
 
-    itens.filter(it => it.andar === andarVisivel).forEach(item => {
-        // Se for vista lateral, a altura do bloco no desenho vira a propriedade 'alt'
+    const itensDoAndar = itens.filter(it => it.andar === andarVisivel);
+
+    itensDoAndar.forEach(item => {
+        // Se for vista lateral, usamos 'alt' para a altura visual
         const w = item.w * escalaAtualUsada;
         const h = vistaLateral ? (item.alt * escalaAtualUsada) : (item.h * escalaAtualUsada);
         
         ctx.save();
-        ctx.translate(item.x, item.y);
         
-        // Só rotaciona se NÃO for vista lateral
-        if (!vistaLateral) {
+        if (vistaLateral) {
+            // Alinhamento na base para o corte lateral
+            const m_comp = parseFloat(document.getElementById('terr_comp').value) || 10;
+            const soloY = (800 + (m_comp * escalaAtualUsada)) / 2;
+            ctx.translate(item.x, soloY - h/2); 
+        } else {
+            ctx.translate(item.x, item.y);
             ctx.rotate(item.rot * Math.PI / 180);
         }
 
@@ -146,19 +151,14 @@ function desenhar() {
         }
 
         // Borda de seleção
-        if (itensSelecionados.includes(item)) {
-            ctx.strokeStyle = "#0078d7";
-            ctx.lineWidth = 3;
-        } else {
-            ctx.strokeStyle = "#333";
-            ctx.lineWidth = 1;
-        }
+        ctx.strokeStyle = (itensSelecionados.includes(item)) ? "#0078d7" : "#333";
+        ctx.lineWidth = (itensSelecionados.includes(item)) ? 3 : 1;
         ctx.strokeRect(-w/2, -h/2, w, h);
         
         ctx.fillStyle = "#000";
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(item.nome, 0, 5);
+        ctx.fillText(vistaLateral ? `${item.nome} (${item.alt}m)` : item.nome, 0, 5);
         ctx.restore();
     });
 
@@ -203,9 +203,7 @@ function desenharSeloTecnico() {
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
     
-    // --- LOGOMARCA NO SELO (CORRIGIDA) ---
     if (imagens.logo.complete) {
-        // Definir tamanho fixo e manter proporção
         const boxSize = 120;
         ctx.drawImage(imagens.logo, 940, 20, boxSize, boxSize);
     }
@@ -294,13 +292,11 @@ window.onmouseup = () => {
     desenhar();
 };
 
-// CONTROLE DE TECLADO MELHORADO
+// CONTROLE DE TECLADO
 window.addEventListener('keydown', function(e) {
     if (itensSelecionados.length === 0) return;
-    
     const k = e.key.toLowerCase();
 
-    // Bloquear scroll se usar setas
     if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
         e.preventDefault();
     }
@@ -314,7 +310,6 @@ window.addEventListener('keydown', function(e) {
         itensSelecionados = []; 
     }
 
-    // Setas para redimensionar (Aumenta/Diminui)
     if (k === 'arrowup') {
         itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
     }
