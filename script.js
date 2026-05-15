@@ -6,14 +6,13 @@ let escalaPx = 30;
 let zoom = 1.0;
 let itens = [];      
 let estoque = [];    
-let selecionado = null; // Item principal para redimensionar/girar
-let itensSelecionados = []; // Lista para seleção múltipla
+let selecionado = null; 
+let itensSelecionados = []; 
 let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
 let escalaAtualUsada = 30; 
 
-// Variáveis para Seleção por Área
 let selecionandoArea = false;
 let areaInicio = { x: 0, y: 0 };
 let areaFim = { x: 0, y: 0 };
@@ -26,7 +25,7 @@ const imagens = {
     porta_simples: new Image(), porta_dupla: new Image(),
     janela_dupla: new Image(), janela_basculante: new Image()
 };
-// Definição dos caminhos - Certifique-se que os arquivos existem nestas pastas
+
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens.mesa_4.src = 'assets/img/mesa_4c.png';
 imagens.mesa_6.src = 'assets/img/mesa_6c.png';
@@ -38,11 +37,11 @@ imagens.porta_dupla.src = 'assets/img/porta_dupla.png';
 imagens.janela_dupla.src = 'assets/img/janela_dupla.png';
 imagens.janela_basculante.src = 'assets/img/janela_basculante.png';
 
-// Redesenha o canvas assim que cada imagem terminar de carregar
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
     img.onerror = (e) => console.warn("Imagem não encontrada: " + e.target.src);
 });
+
 // --- 2. BIBLIOTECA DE COMPONENTES ---
 const biblioteca = {
     'suite_master': { nome: 'Suíte Master + Closet', w: 6.0, h: 5.0, alt: 2.8 },
@@ -106,34 +105,47 @@ function atualizarListaEstoque() {
 
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
-    canvas.style.width = (1200 * zoom) + "px";
-    canvas.style.height = (800 * zoom) + "px";
+    // Ajuste crucial: altera o tamanho real do canvas para as barras de rolagem funcionarem
+    canvas.width = 1200 * zoom;
+    canvas.height = 800 * zoom;
     desenhar(); 
+}
+
+function alternarVista(modo) {
+    vistaLateral = (modo === 'lateral');
+    desenhar();
+}
+
+// Botão "Enviar para o Papel"
+function enviarDadosParaPapel() {
+    desenhar(); // Apenas atualiza o canvas com os dados atuais dos inputs
 }
 
 // --- 4. FUNÇÕES DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
-    ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
+    ctx.clearRect(0, 0, 1200, 800);
 
+    // Marca d'água (Logo centralizada)
     if (imagens.logo.complete) {
         ctx.save(); ctx.globalAlpha = 0.05;
         ctx.drawImage(imagens.logo, 150, 150, 600, 500); ctx.restore();
     }
 
     desenharSeloTecnico();
+    desenharEscalaTerreno();
 
-    // Desenhar Itens do Andar Ativo
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
         const w = item.w * escalaAtualUsada;
-        const h = item.h * escalaAtualUsada;
+        const h = vistaLateral ? (item.alt * escalaAtualUsada) : (item.h * escalaAtualUsada);
+        
         ctx.save();
         ctx.translate(item.x, item.y);
-        ctx.rotate(item.rot * Math.PI / 180);
+        if (!vistaLateral) ctx.rotate(item.rot * Math.PI / 180);
 
         const imgObj = imagens[item.tipo];
-        if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
+        if (item.usaImg && imgObj && imgObj.complete && !vistaLateral) {
             ctx.drawImage(imgObj, -w/2, -h/2, w, h);
         } else {
             ctx.fillStyle = item.cor || "#777";
@@ -142,87 +154,116 @@ function desenhar() {
             ctx.globalAlpha = 1.0;
         }
 
-        // Borda de Destaque para Selecionados
-        if (itensSelecionados.includes(item)) {
-            ctx.strokeStyle = "#0078d7";
-            ctx.lineWidth = 3;
-            ctx.strokeRect(-w/2 - 2, -h/2 - 2, w + 4, h + 4);
-        } else {
-            ctx.strokeStyle = "#333";
-            ctx.lineWidth = 1;
-            ctx.strokeRect(-w/2, -h/2, w, h);
-        }
+        // Borda e Texto
+        ctx.strokeStyle = (itensSelecionados.includes(item)) ? "#0078d7" : "#333";
+        ctx.lineWidth = (itensSelecionados.includes(item)) ? 3 : 1;
+        ctx.strokeRect(-w/2, -h/2, w, h);
 
         ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
         ctx.fillText(item.nome, 0, 5);
         ctx.restore();
     });
 
-    // Desenha o Retângulo de Seleção (Marquee)
     if (selecionandoArea) {
         ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0); // Desenha por cima de tudo sem zoom interno
+        ctx.setTransform(1, 0, 0, 1, 0, 0); 
         ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
         ctx.strokeStyle = "#0078d7";
-        const rx = areaInicio.x * zoom;
-        const ry = areaInicio.y * zoom;
-        const rw = (areaFim.x - areaInicio.x) * zoom;
-        const rh = (areaFim.y - areaInicio.y) * zoom;
-        ctx.fillRect(rx, ry, rw, rh);
-        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.fillRect(areaInicio.x * zoom, areaInicio.y * zoom, (areaFim.x - areaInicio.x) * zoom, (areaFim.y - areaInicio.y) * zoom);
+        ctx.strokeRect(areaInicio.x * zoom, areaInicio.y * zoom, (areaFim.x - areaInicio.x) * zoom, (areaFim.y - areaInicio.y) * zoom);
         ctx.restore();
     }
 }
 
+function desenharEscalaTerreno() {
+    const m_larg = parseFloat(document.getElementById('terr_larg').value) || 0;
+    const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
+    escalaAtualUsada = escalaPx;
+
+    if (m_larg > 0 && m_comp > 0) {
+        const areaUtilW = 850; const areaUtilH = 750;
+        if ((m_larg * escalaPx) > areaUtilW || (m_comp * escalaPx) > areaUtilH) {
+            escalaAtualUsada = Math.min(areaUtilW/m_larg, areaUtilH/m_comp) * 0.9;
+        }
+        const px_w = m_larg * escalaAtualUsada;
+        const px_h = m_comp * escalaAtualUsada;
+        ctx.strokeStyle = "red"; ctx.setLineDash([5,5]);
+        const tx = (900 - px_w) / 2; const ty = (800 - px_h) / 2;
+        ctx.strokeRect(tx, ty, px_w, px_h);
+        ctx.setLineDash([]);
+        ctx.fillStyle = "red"; ctx.font = "12px Arial";
+        ctx.fillText(`LOTE: ${m_larg}m x ${m_comp}m (Escala: 1:${Math.round(3779/escalaAtualUsada)})`, tx, ty - 10);
+    }
+}
+
 function desenharSeloTecnico() {
-    ctx.save(); ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
-    ctx.strokeRect(10, 10, 1180, 780);
-    ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
-    ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
-    ctx.fillText("PROJETO TÉCNICO", 920, 50);
+    const cliente = document.getElementById('nome_cliente').value || "---";
+    const resp = document.getElementById('resp_tecnico').value || "---";
+    const m_larg = document.getElementById('terr_larg').value || "0";
+    const m_comp = document.getElementById('terr_comp').value || "0";
+
+    ctx.save();
+    ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+    ctx.strokeRect(10, 10, 1180, 780); // Borda externa
+    ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke(); // Linha lateral
+
+    // Logo no Selo
+    if (imagens.logo.complete) ctx.drawImage(imagens.logo, 920, 30, 80, 80);
+
+    ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
+    ctx.fillText("PROJETO TÉCNICO", 920, 130);
+    ctx.font = "11px Arial";
+    ctx.fillText("CLIENTE: " + cliente, 920, 160);
+    ctx.fillText("RESP.: " + resp, 920, 180);
+    ctx.fillText(`TERRENO: ${m_larg}m x ${m_comp}m`, 920, 200);
+
+    // Legenda Automática
+    ctx.font = "bold 12px Arial";
+    ctx.fillText("LEGENDA E QUANTIDADES:", 920, 240);
+    let counts = {};
+    itens.forEach(it => counts[it.nome] = (counts[it.nome] || 0) + 1);
+    Object.keys(counts).forEach((nome, i) => {
+        ctx.fillStyle = "#000";
+        ctx.fillText(`${nome}: ${counts[nome]} un.`, 940, 270 + (i * 20));
+    });
     ctx.restore();
 }
 
-// --- 5. EVENTOS DE INTERAÇÃO (COM SELEÇÃO MÚLTIPLA) ---
+// --- 5. EVENTOS ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (1200 / rect.width);
-    const my = (e.clientY - rect.top) * (800 / rect.height);
+    const mx = (e.clientX - rect.left) / zoom;
+    const my = (e.clientY - rect.top) / zoom;
     
     const itemClicado = [...itens].reverse().find(it => {
         const w = it.w * escalaAtualUsada;
-        const h = it.h * escalaAtualUsada;
+        const h = vistaLateral ? (it.alt * escalaAtualUsada) : (it.h * escalaAtualUsada);
         return mx > it.x - w/2 && mx < it.x + w/2 && my > it.y - h/2 && my < it.y + h/2;
     });
 
     if (itemClicado) {
-        if (!itensSelecionados.includes(itemClicado)) {
-            itensSelecionados = [itemClicado];
-        }
+        if (!itensSelecionados.includes(itemClicado)) itensSelecionados = [itemClicado];
         selecionado = itemClicado;
         arrastando = true;
-        mouseOffset.x = mx;
-        mouseOffset.y = my;
+        mouseOffset.x = mx; mouseOffset.y = my;
     } else {
         selecionandoArea = true;
         itensSelecionados = [];
-        areaInicio = { x: mx, y: my };
-        areaFim = { x: mx, y: my };
+        areaInicio = { x: mx, y: my }; areaFim = { x: mx, y: my };
     }
     desenhar();
 };
 
 canvas.onmousemove = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (1200 / rect.width);
-    const my = (e.clientY - rect.top) * (800 / rect.height);
+    const mx = (e.clientX - rect.left) / zoom;
+    const my = (e.clientY - rect.top) / zoom;
 
     if (arrastando) {
         const dx = mx - mouseOffset.x;
         const dy = my - mouseOffset.y;
         itensSelecionados.forEach(it => { it.x += dx; it.y += dy; });
-        mouseOffset.x = mx;
-        mouseOffset.y = my;
+        mouseOffset.x = mx; mouseOffset.y = my;
         desenhar();
     } else if (selecionandoArea) {
         areaFim = { x: mx, y: my };
@@ -232,11 +273,11 @@ canvas.onmousemove = (e) => {
 
 window.onmouseup = () => {
     if (selecionandoArea) {
-        const xMin = Math.min(areaInicio.x, areaFim.x);
-        const xMax = Math.max(areaInicio.x, areaFim.x);
-        const yMin = Math.min(areaInicio.y, areaFim.y);
-        const yMax = Math.max(areaInicio.y, areaFim.y);
-        itensSelecionados = itens.filter(it => it.x > xMin && it.x < xMax && it.y > yMin && it.y < yMax);
+        const x1 = Math.min(areaInicio.x, areaFim.x);
+        const x2 = Math.max(areaInicio.x, areaFim.x);
+        const y1 = Math.min(areaInicio.y, areaFim.y);
+        const y2 = Math.max(areaInicio.y, areaFim.y);
+        itensSelecionados = itens.filter(it => it.x > x1 && it.x < x2 && it.y > y1 && it.y < y2);
         selecionandoArea = false;
     }
     arrastando = false;
@@ -245,17 +286,20 @@ window.onmouseup = () => {
 
 window.onkeydown = (e) => {
     if (itensSelecionados.length === 0) return;
-    const k = e.key.toLowerCase();
-    if (k === 'r') itensSelecionados.forEach(it => it.rot += 15);
-    if (k === 'delete' || k === 'backspace') {
-        itens = itens.filter(it => !itensSelecionados.includes(it));
-        itensSelecionados = [];
-    }
+    const k = e.key;
+    // Atalhos
+    if (k.toLowerCase() === 'r') itensSelecionados.forEach(it => it.rot += 15);
+    if (k === 'Delete') { itens = itens.filter(it => !itensSelecionados.includes(it)); itensSelecionados = []; }
+    
+    // Redimensionamento por Setas
+    if (k === 'ArrowUp') itensSelecionados.forEach(it => it.h += 0.1);
+    if (k === 'ArrowDown') itensSelecionados.forEach(it => it.h -= 0.1);
+    if (k === 'ArrowRight') itensSelecionados.forEach(it => it.w += 0.1);
+    if (k === 'ArrowLeft') itensSelecionados.forEach(it => it.w -= 0.1);
+    
     desenhar();
 };
 
-// --- FUNÇÕES EXTRAS ---
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
-function enviarDadosParaPapel() { desenhar(); }
 
 desenhar();
