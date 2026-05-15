@@ -76,21 +76,23 @@ Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
 });
 
-// --- 2. BIBLIOTECA ---
+// --- 2. BIBLIOTECA (INCLUINDO NOVOS CÔMODOS) ---
 const biblioteca = {
-    'suite_master': { nome: 'Suíte Master', w: 6.0, h: 5.0, alt: 2.8 },
-    'suite_comum':  { nome: 'Suíte Comum', w: 4.0, h: 3.5, alt: 2.8 },
-    'kitnet':       { nome: 'Kitnet', w: 5.0, h: 4.0, alt: 2.8 },
-    'quarto':       { nome: 'Quarto', w: 3.5, h: 3.5, alt: 2.8 },
-    'sala':         { nome: 'Sala', w: 5.0, h: 4.5, alt: 2.8 },
-    'cozinha':      { nome: 'Cozinha', w: 3.0, h: 4.0, alt: 2.8 },
-    'banheiro':     { nome: 'Banheiro', w: 1.5, h: 2.5, alt: 2.8 },
-    'lavanderia':   { nome: 'Lavanderia', w: 2.0, h: 2.0, alt: 2.8 },
-    'corredor':     { nome: 'Corredor', w: 1.0, h: 4.0, alt: 2.8 },
-    'garagem':      { nome: 'Garagem', w: 3.5, h: 5.5, alt: 2.5 },
-    'piscina':      { nome: 'Piscina', w: 3.0, h: 6.0, alt: 1.5 },
-    'escada_reta':  { nome: 'Escada Reta', w: 1.0, h: 3.0, alt: 2.8 },
-    'escada_l':     { nome: 'Escada L', w: 2.0, h: 2.0, alt: 2.8 },
+    'suite_master':    { nome: 'Suíte Master', w: 6.0, h: 5.0, alt: 2.8 },
+    'suite_normal':    { nome: 'Suíte Normal', w: 4.0, h: 3.5, alt: 2.8 },
+    'kitnet':          { nome: 'Kitnet', w: 5.0, h: 4.0, alt: 2.8 },
+    'quarto':          { nome: 'Quarto', w: 3.5, h: 3.5, alt: 2.8 },
+    'sala':            { nome: 'Sala', w: 5.0, h: 4.5, alt: 2.8 },
+    'cozinha':         { nome: 'Cozinha', w: 3.0, h: 4.0, alt: 2.8 },
+    'banheiro':        { nome: 'Banheiro Social', w: 1.5, h: 2.5, alt: 2.8 },
+    'banheiro_duplo':  { nome: 'Banheiro Duplo', w: 3.0, h: 2.5, alt: 2.8 },
+    'lavanderia':      { nome: 'Lavanderia', w: 2.0, h: 2.0, alt: 2.8 },
+    'area_servico':    { nome: 'Área de Serviço', w: 3.0, h: 2.0, alt: 2.8 },
+    'corredor':        { nome: 'Corredor', w: 1.2, h: 4.0, alt: 2.8 },
+    'garagem':         { nome: 'Garagem', w: 3.5, h: 5.5, alt: 2.5 },
+    'piscina':         { nome: 'Piscina Base', w: 3.0, h: 6.0, alt: 1.5 },
+    'escada_reta':     { nome: 'Escada Reta', w: 1.0, h: 3.0, alt: 2.8 },
+    'escada_l':        { nome: 'Escada L', w: 2.0, h: 2.0, alt: 2.8 },
     
     // Itens da Imagem (Nomes IDÊNTICOS)
     'carro01': { nome: 'carro01', w: 2.2, h: 4.5, alt: 1.5, usaImg: true },
