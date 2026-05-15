@@ -16,16 +16,61 @@ let selecionandoArea = false;
 let areaInicio = { x: 0, y: 0 };
 let areaFim = { x: 0, y: 0 };
 
-// --- 1. CARREGAMENTO DE ASSETS ---
+// --- 1. CARREGAMENTO DE ASSETS (NOMES EXATOS DA IMAGEM) ---
 const imagens = {
     logo: new Image(),
+    // Assets da Imagem Enviada
+    "carro01": new Image(),
+    "escada01": new Image(),
+    "escada02": new Image(),
+    "escada03": new Image(),
+    "mesa-de-sinuca": new Image(),
+    "moto01": new Image(),
+    "piscina01": new Image(),
+    "piscina02": new Image(),
+    "piscina03": new Image(),
+    "piscina04": new Image(),
+    "piscina05": new Image(),
+    "piscina06": new Image(),
+    "Porta direita 90D-13": new Image(),
+    "porta": new Image(),
+    "Porta-Sanfonada": new Image(),
+    "sala01": new Image(),
+    "sala02": new Image(),
+    "sala03": new Image(),
+    "sala04": new Image(),
+    "sofa03": new Image(),
+    "sofa04": new Image(),
+    // Assets Originais
     mesa_4: new Image(), mesa_6: new Image(), mesa_8: new Image(),
     sofa_2: new Image(), sofa_3: new Image(),
     porta_simples: new Image(), porta_dupla: new Image(),
     janela_dupla: new Image(), janela_basculante: new Image()
 };
 
+// Caminhos dos arquivos
 imagens.logo.src = 'assets/img/1574799294920.png';
+imagens["carro01"].src = 'assets/img/carro01.png';
+imagens["escada01"].src = 'assets/img/escada01.png';
+imagens["escada02"].src = 'assets/img/escada02.png';
+imagens["escada03"].src = 'assets/img/escada03.png';
+imagens["mesa-de-sinuca"].src = 'assets/img/mesa-de-sinuca.png';
+imagens["moto01"].src = 'assets/img/moto01.png';
+imagens["piscina01"].src = 'assets/img/piscina01.png';
+imagens["piscina02"].src = 'assets/img/piscina02.png';
+imagens["piscina03"].src = 'assets/img/piscina03.png';
+imagens["piscina04"].src = 'assets/img/piscina04.png';
+imagens["piscina05"].src = 'assets/img/piscina05.png';
+imagens["piscina06"].src = 'assets/img/piscina06.png';
+imagens["Porta direita 90D-13"].src = 'assets/img/Porta direita 90D-13.png';
+imagens["porta"].src = 'assets/img/porta.png';
+imagens["Porta-Sanfonada"].src = 'assets/img/Porta-Sanfonada.png';
+imagens["sala01"].src = 'assets/img/sala01.png';
+imagens["sala02"].src = 'assets/img/sala02.png';
+imagens["sala03"].src = 'assets/img/sala03.png';
+imagens["sala04"].src = 'assets/img/sala04.png';
+imagens["sofa03"].src = 'assets/img/sofa03.png';
+imagens["sofa04"].src = 'assets/img/sofa04.png';
 
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
@@ -46,15 +91,29 @@ const biblioteca = {
     'piscina':      { nome: 'Piscina', w: 3.0, h: 6.0, alt: 1.5 },
     'escada_reta':  { nome: 'Escada Reta', w: 1.0, h: 3.0, alt: 2.8 },
     'escada_l':     { nome: 'Escada L', w: 2.0, h: 2.0, alt: 2.8 },
-    'mesa_4':       { nome: 'Mesa 4L', w: 1.2, h: 1.2, alt: 0.75, usaImg: true },
-    'mesa_6':       { nome: 'Mesa 6L', w: 1.8, h: 0.9, alt: 0.75, usaImg: true },
-    'mesa_8':       { nome: 'Mesa 8L', w: 2.4, h: 1.1, alt: 0.75, usaImg: true },
-    'sofa_2':       { nome: 'Sofá 2L', w: 1.6, h: 0.9, alt: 0.85, usaImg: true },
-    'sofa_3':       { nome: 'Sofá 3L', w: 2.2, h: 0.9, alt: 0.85, usaImg: true },
-    'porta_simples': { nome: 'Porta', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
-    'porta_dupla':   { nome: 'Porta Dupla', w: 1.6, h: 0.1, alt: 2.1, usaImg: true },
-    'janela_dupla':  { nome: 'Janela', w: 1.5, h: 0.1, alt: 1.2, usaImg: true },
-    'janela_basculante': { nome: 'Janela Basc.', w: 0.6, h: 0.1, alt: 0.6, usaImg: true }
+    
+    // Itens da Imagem (Nomes IDÊNTICOS)
+    'carro01': { nome: 'carro01', w: 2.2, h: 4.5, alt: 1.5, usaImg: true },
+    'escada01': { nome: 'escada01', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
+    'escada02': { nome: 'escada02', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
+    'escada03': { nome: 'escada03', w: 2.0, h: 2.0, alt: 2.8, usaImg: true },
+    'mesa-de-sinuca': { nome: 'mesa-de-sinuca', w: 2.5, h: 1.4, alt: 0.8, usaImg: true },
+    'moto01': { nome: 'moto01', w: 0.8, h: 2.0, alt: 1.2, usaImg: true },
+    'piscina01': { nome: 'piscina01', w: 4.0, h: 8.0, alt: 1.4, usaImg: true },
+    'piscina02': { nome: 'piscina02', w: 5.0, h: 3.0, alt: 1.4, usaImg: true },
+    'piscina03': { nome: 'piscina03', w: 6.0, h: 4.0, alt: 1.4, usaImg: true },
+    'piscina04': { nome: 'piscina04', w: 4.5, h: 4.5, alt: 1.4, usaImg: true },
+    'piscina05': { nome: 'piscina05', w: 3.5, h: 7.0, alt: 1.4, usaImg: true },
+    'piscina06': { nome: 'piscina06', w: 5.5, h: 5.5, alt: 1.4, usaImg: true },
+    'Porta direita 90D-13': { nome: 'Porta direita 90D-13', w: 0.9, h: 0.1, alt: 2.1, usaImg: true },
+    'porta': { nome: 'porta', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'Porta-Sanfonada': { nome: 'Porta-Sanfonada', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'sala01': { nome: 'sala01', w: 4.0, h: 4.0, alt: 1.0, usaImg: true },
+    'sala02': { nome: 'sala02', w: 3.5, h: 3.5, alt: 1.0, usaImg: true },
+    'sala03': { nome: 'sala03', w: 4.2, h: 4.2, alt: 1.0, usaImg: true },
+    'sala04': { nome: 'sala04', w: 3.8, h: 3.8, alt: 1.0, usaImg: true },
+    'sofa03': { nome: 'sofa03', w: 2.2, h: 0.9, alt: 0.85, usaImg: true },
+    'sofa04': { nome: 'sofa04', w: 2.5, h: 1.0, alt: 0.85, usaImg: true }
 };
 
 // --- 3. FUNÇÕES DE INTERFACE ---
@@ -90,19 +149,9 @@ function ajustarZoom(delta) {
     desenhar(); 
 }
 
-function desenharVistaLateral() { 
-    vistaLateral = true; 
-    desenhar(); 
-}
-
-function voltarParaPlanta() { 
-    vistaLateral = false; 
-    desenhar(); 
-}
-
-function enviarDadosParaPapel() { 
-    desenhar(); 
-}
+function desenharVistaLateral() { vistaLateral = true; desenhar(); }
+function voltarParaPlanta() { vistaLateral = false; desenhar(); }
+function enviarDadosParaPapel() { desenhar(); }
 
 // --- 4. FUNÇÕES DE DESENHO ---
 function desenhar() {
@@ -110,7 +159,6 @@ function desenhar() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Marca d'água central
     if (imagens.logo.complete) {
         ctx.save();
         ctx.globalAlpha = 0.05;
@@ -122,17 +170,12 @@ function desenhar() {
     desenharSeloTecnico();
     desenharEscalaTerreno();
 
-    const itensDoAndar = itens.filter(it => it.andar === andarVisivel);
-
-    itensDoAndar.forEach(item => {
-        // Se for vista lateral, usamos 'alt' para a altura visual
+    itens.filter(it => it.andar === andarVisivel).forEach(item => {
         const w = item.w * escalaAtualUsada;
         const h = vistaLateral ? (item.alt * escalaAtualUsada) : (item.h * escalaAtualUsada);
         
         ctx.save();
-        
         if (vistaLateral) {
-            // Alinhamento na base para o corte lateral
             const m_comp = parseFloat(document.getElementById('terr_comp').value) || 10;
             const soloY = (800 + (m_comp * escalaAtualUsada)) / 2;
             ctx.translate(item.x, soloY - h/2); 
@@ -150,7 +193,6 @@ function desenhar() {
             ctx.globalAlpha = 1.0;
         }
 
-        // Borda de seleção
         ctx.strokeStyle = (itensSelecionados.includes(item)) ? "#0078d7" : "#333";
         ctx.lineWidth = (itensSelecionados.includes(item)) ? 3 : 1;
         ctx.strokeRect(-w/2, -h/2, w, h);
@@ -234,7 +276,6 @@ function desenharSeloTecnico() {
         ctx.fillStyle = "#000";
         ctx.fillText(`${nome}: ${counts[nome].qtd} un.`, 935, posY);
     });
-    
     ctx.restore();
 }
 
@@ -243,7 +284,6 @@ canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
     const my = (e.clientY - rect.top) / zoom;
-    
     const itemClicado = [...itens].reverse().find(it => {
         const w = it.w * escalaAtualUsada;
         const h = vistaLateral ? (it.alt * escalaAtualUsada) : (it.h * escalaAtualUsada);
@@ -292,45 +332,18 @@ window.onmouseup = () => {
     desenhar();
 };
 
-// CONTROLE DE TECLADO
 window.addEventListener('keydown', function(e) {
     if (itensSelecionados.length === 0) return;
     const k = e.key.toLowerCase();
-
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
-        e.preventDefault();
-    }
-
-    if (k === 'r') {
-        itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
-    }
-
-    if (k === 'delete' || k === 'backspace') { 
-        itens = itens.filter(it => !itensSelecionados.includes(it)); 
-        itensSelecionados = []; 
-    }
-
-    if (k === 'arrowup') {
-        itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
-    }
-    if (k === 'arrowdown') {
-        itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
-    }
-    if (k === 'arrowright') {
-        itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
-    }
-    if (k === 'arrowleft') {
-        itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
-    }
-    
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
+    if (k === 'r') itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
+    if (k === 'delete' || k === 'backspace') { itens = itens.filter(it => !itensSelecionados.includes(it)); itensSelecionados = []; }
+    if (k === 'arrowup') itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
+    if (k === 'arrowdown') itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
+    if (k === 'arrowright') itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
+    if (k === 'arrowleft') itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
     desenhar();
 }, true);
 
-function limparTudo() { 
-    itens = []; 
-    estoque = []; 
-    atualizarListaEstoque(); 
-    desenhar(); 
-}
-
+function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
 desenhar();
