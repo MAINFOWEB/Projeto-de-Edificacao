@@ -1,31 +1,159 @@
-:root { --blue: #00d2ff; --dark: #121212; --panel: #1e1e1e; --green: #28a745; --red: #dc3545; }
-body { font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; background: var(--dark); color: white; height: 100vh; overflow: hidden; }
+:root { 
+    --blue: #00d2ff; 
+    --dark: #121212; 
+    --panel: #1e1e1e; 
+    --green: #28a745; 
+    --red: #dc3545; 
+}
 
-#sidebar { width: 300px; background: var(--panel); padding: 20px; border-right: 1px solid #333; overflow-y: auto; flex-shrink: 0; }
-.titulo-topo { color: #fff; text-align: center; border-bottom: 2px solid var(--blue); padding-bottom: 10px; margin-top: 0; text-transform: uppercase; }
+/* Ajuste no body para garantir que nada escape da tela principal */
+body { 
+    font-family: 'Segoe UI', sans-serif; 
+    margin: 0; 
+    display: flex; 
+    background: var(--dark); 
+    color: white; 
+    height: 100vh; 
+    overflow: hidden; 
+}
+
+/* Sidebar fixa na esquerda */
+#sidebar { 
+    width: 300px; 
+    background: var(--panel); 
+    padding: 20px; 
+    border-right: 1px solid #333; 
+    overflow-y: auto; 
+    flex-shrink: 0; 
+    height: 100vh;
+    box-sizing: border-box;
+    z-index: 10;
+}
+
+.titulo-topo { 
+    color: #fff; 
+    text-align: center; 
+    border-bottom: 2px solid var(--blue); 
+    padding-bottom: 10px; 
+    margin-top: 0; 
+    text-transform: uppercase; 
+}
+
 .azul { color: var(--blue); }
 
-.section { background: #252525; padding: 12px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid var(--blue); }
-label { display: block; font-size: 11px; margin-bottom: 5px; color: #888; font-weight: bold; }
+.section { 
+    background: #252525; 
+    padding: 12px; 
+    border-radius: 6px; 
+    margin-bottom: 15px; 
+    border-left: 4px solid var(--blue); 
+}
+
+label { 
+    display: block; 
+    font-size: 11px; 
+    margin-bottom: 5px; 
+    color: #888; 
+    font-weight: bold; 
+}
 
 .color-picker-container { display: flex; align-items: center; gap: 10px; }
 #preview-cor { flex: 1; height: 30px; border-radius: 4px; border: 1px solid #444; background: #e0f7fa; }
 
-input, select, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 4px; border: none; background: #333; color: white; font-size: 13px; outline: none; }
+input, select, button { 
+    width: 100%; 
+    padding: 10px; 
+    margin: 5px 0; 
+    border-radius: 4px; 
+    border: none; 
+    background: #333; 
+    color: white; 
+    font-size: 13px; 
+    outline: none; 
+}
+
 .btn-add { background: var(--green); cursor: pointer; font-weight: bold; }
 .btn-print { background: var(--blue); color: #000; cursor: pointer; font-weight: bold; margin-top: 15px; }
 .btn-reset { background: var(--red); cursor: pointer; font-weight: bold; }
 
-#canvas-container { flex: 1; background: #2a2a2a; overflow: auto; display: flex; justify-content: center; padding: 40px; cursor: crosshair; }
-#inventory { width: 240px; background: #181818; padding: 15px; border-left: 1px solid #333; overflow-y: auto; }
-.item-pronto { background: #2a2a2a; padding: 10px; margin-bottom: 8px; border-radius: 4px; cursor: pointer; border: 1px solid #444; font-size: 11px; }
+/* ÁREA DO CANVAS - CORRIGIDA PARA BARRAS DE ROLAGEM */
+#canvas-container { 
+    flex: 1; 
+    background: #2a2a2a; 
+    overflow: auto; /* IMPORTANTE: Cria as barras de rolagem */
+    display: block; /* Garante que o conteúdo interno dite o scroll */
+    padding: 60px; 
+    cursor: crosshair; 
+    position: relative;
+    height: 100vh;
+    box-sizing: border-box;
+}
 
-canvas { background: white; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform-origin: top center; cursor: crosshair; }
-.zoom-controls { position: fixed; bottom: 25px; left: 330px; display: flex; gap: 10px; z-index: 100; }
-.zoom-btn { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--blue); background: #000; color: var(--blue); cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+/* O PAPEL (CANVAS) */
+canvas { 
+    background: white; 
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6); 
+    display: block;
+    margin: 0 auto; /* Centraliza o papel quando o zoom é pequeno */
+    cursor: crosshair; 
+}
+
+/* Estoque na direita */
+#inventory { 
+    width: 240px; 
+    background: #181818; 
+    padding: 15px; 
+    border-left: 1px solid #333; 
+    overflow-y: auto; 
+    flex-shrink: 0;
+}
+
+.item-pronto { 
+    background: #2a2a2a; 
+    padding: 10px; 
+    margin-bottom: 8px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    border: 1px solid #444; 
+    font-size: 11px; 
+}
+
+/* Controles de Zoom sobrepostos */
+.zoom-controls { 
+    position: fixed; 
+    bottom: 25px; 
+    left: 330px; /* Posicionado logo após o menu lateral */
+    display: flex; 
+    gap: 10px; 
+    z-index: 100; 
+}
+
+.zoom-btn { 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    border: 2px solid var(--blue); 
+    background: #000; 
+    color: var(--blue); 
+    cursor: pointer; 
+    font-size: 20px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    transition: 0.2s;
+}
+
+.zoom-btn:hover {
+    background: var(--blue);
+    color: black;
+}
+
 .info-uso { font-size: 10px; color: #777; margin-top: 20px; text-align: center; }
 
+/* Configuração de Impressão */
 @media print {
     #sidebar, #inventory, .zoom-controls { display: none !important; }
-    canvas { transform: scale(1) !important; box-shadow: none; border: none; }
+    body { overflow: visible; display: block; }
+    #canvas-container { padding: 0; margin: 0; overflow: visible; display: block; }
+    canvas { transform: scale(1) !important; box-shadow: none; border: none; margin: 0; }
 }
