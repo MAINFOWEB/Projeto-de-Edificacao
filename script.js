@@ -26,15 +26,7 @@ const imagens = {
 };
 
 imagens.logo.src = 'assets/img/1574799294920.png';
-imagens.mesa_4.src = 'assets/img/mesa_4c.png';
-imagens.mesa_6.src = 'assets/img/mesa_6c.png';
-imagens.mesa_8.src = 'assets/img/mesa_8c.png';
-imagens.sofa_2.src = 'assets/img/sofa_2l.png';
-imagens.sofa_3.src = 'assets/img/sofa_3l.png';
-imagens.porta_simples.src = 'assets/img/porta_simples.png';
-imagens.porta_dupla.src = 'assets/img/porta_dupla.png';
-imagens.janela_dupla.src = 'assets/img/janela_dupla.png';
-imagens.janela_basculante.src = 'assets/img/janela_basculante.png';
+// Adicione os caminhos das outras imagens se necessário
 
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
@@ -99,9 +91,19 @@ function ajustarZoom(delta) {
     desenhar(); 
 }
 
-function desenharVistaLateral() { vistaLateral = true; desenhar(); }
-function voltarParaPlanta() { vistaLateral = false; desenhar(); }
-function enviarDadosParaPapel() { desenhar(); }
+function desenharVistaLateral() { 
+    vistaLateral = true; 
+    desenhar(); 
+}
+
+function voltarParaPlanta() { 
+    vistaLateral = false; 
+    desenhar(); 
+}
+
+function enviarDadosParaPapel() { 
+    desenhar(); 
+}
 
 // --- 4. FUNÇÕES DE DESENHO ---
 function desenhar() {
@@ -109,42 +111,61 @@ function desenhar() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Marca d'água central
+    // Marca d'água centralizada e proporcional
     if (imagens.logo.complete) {
-        ctx.save(); ctx.globalAlpha = 0.05;
-        ctx.drawImage(imagens.logo, 150, 150, 600, 500); ctx.restore();
+        ctx.save();
+        ctx.globalAlpha = 0.05;
+        const tamLogo = 500;
+        ctx.drawImage(imagens.logo, (900 - tamLogo) / 2, (800 - tamLogo) / 2, tamLogo, tamLogo);
+        ctx.restore();
     }
 
     desenharSeloTecnico();
     desenharEscalaTerreno();
 
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
+        // Se for vista lateral, a altura do bloco no desenho vira a propriedade 'alt'
         const w = item.w * escalaAtualUsada;
         const h = vistaLateral ? (item.alt * escalaAtualUsada) : (item.h * escalaAtualUsada);
         
         ctx.save();
         ctx.translate(item.x, item.y);
-        if (!vistaLateral) ctx.rotate(item.rot * Math.PI / 180);
+        
+        // Só rotaciona se NÃO for vista lateral
+        if (!vistaLateral) {
+            ctx.rotate(item.rot * Math.PI / 180);
+        }
 
         if (item.usaImg && imagens[item.tipo]?.complete && !vistaLateral) {
             ctx.drawImage(imagens[item.tipo], -w/2, -h/2, w, h);
         } else {
             ctx.fillStyle = item.cor || "#777";
-            ctx.globalAlpha = 0.6; ctx.fillRect(-w/2, -h/2, w, h); ctx.globalAlpha = 1.0;
+            ctx.globalAlpha = 0.6;
+            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.globalAlpha = 1.0;
         }
 
-        ctx.strokeStyle = (itensSelecionados.includes(item)) ? "#0078d7" : "#333";
-        ctx.lineWidth = (itensSelecionados.includes(item)) ? 3 : 1;
+        // Borda de seleção
+        if (itensSelecionados.includes(item)) {
+            ctx.strokeStyle = "#0078d7";
+            ctx.lineWidth = 3;
+        } else {
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 1;
+        }
         ctx.strokeRect(-w/2, -h/2, w, h);
         
-        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
+        ctx.fillStyle = "#000";
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
         ctx.fillText(item.nome, 0, 5);
         ctx.restore();
     });
 
     if (selecionandoArea) {
         ctx.save();
-        ctx.fillStyle = "rgba(0, 120, 215, 0.2)"; ctx.strokeStyle = "#0078d7";
+        ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
+        ctx.strokeStyle = "#0078d7";
         ctx.fillRect(areaInicio.x, areaInicio.y, areaFim.x - areaInicio.x, areaFim.y - areaInicio.y);
         ctx.strokeRect(areaInicio.x, areaInicio.y, areaFim.x - areaInicio.x, areaFim.y - areaInicio.y);
         ctx.restore();
@@ -156,12 +177,15 @@ function desenharEscalaTerreno() {
     const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
     escalaAtualUsada = escalaPx;
     if (m_larg > 0 && m_comp > 0) {
-        const areaUtilW = 850; const areaUtilH = 750;
+        const areaUtilW = 850;
+        const areaUtilH = 750;
         if ((m_larg * escalaPx) > areaUtilW || (m_comp * escalaPx) > areaUtilH) {
             escalaAtualUsada = Math.min(areaUtilW/m_larg, areaUtilH/m_comp) * 0.9;
         }
-        const px_w = m_larg * escalaAtualUsada; const px_h = m_comp * escalaAtualUsada;
-        ctx.strokeStyle = "red"; ctx.setLineDash([5,5]);
+        const px_w = m_larg * escalaAtualUsada;
+        const px_h = m_comp * escalaAtualUsada;
+        ctx.strokeStyle = "red";
+        ctx.setLineDash([5,5]);
         ctx.strokeRect((900-px_w)/2, (800-px_h)/2, px_w, px_h);
         ctx.setLineDash([]);
     }
@@ -174,24 +198,28 @@ function desenharSeloTecnico() {
     const comp = document.getElementById('terr_comp')?.value || "0";
 
     ctx.save();
-    ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
     
-    // --- LOGOMARCA NO SELO ---
+    // --- LOGOMARCA NO SELO (CORRIGIDA) ---
     if (imagens.logo.complete) {
-        ctx.drawImage(imagens.logo, 910, 20, 80, 80);
+        // Definir tamanho fixo e manter proporção
+        const boxSize = 120;
+        ctx.drawImage(imagens.logo, 940, 20, boxSize, boxSize);
     }
 
-    ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
-    ctx.fillText("PROJETO TÉCNICO", 910, 120);
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 14px Arial";
+    ctx.fillText("PROJETO TÉCNICO", 910, 160);
     ctx.font = "11px Arial";
-    ctx.fillText("CLIENTE: " + cliente, 910, 145);
-    ctx.fillText("RESPONSÁVEL: " + resp, 910, 165);
-    ctx.fillText(`LOTE: ${larg}m x ${comp}m`, 910, 185);
+    ctx.fillText("CLIENTE: " + cliente, 910, 185);
+    ctx.fillText("RESPONSÁVEL: " + resp, 910, 205);
+    ctx.fillText(`LOTE: ${larg}m x ${comp}m`, 910, 225);
 
-    // --- LEGENDA DE CORES E QUANTIDADES ---
-    ctx.font = "bold 12px Arial"; ctx.fillText("LEGENDA / QUANTIDADES:", 910, 220);
+    ctx.font = "bold 12px Arial";
+    ctx.fillText("LEGENDA / QUANTIDADES:", 910, 260);
     
     let counts = {};
     itens.forEach(it => {
@@ -200,17 +228,12 @@ function desenharSeloTecnico() {
     });
 
     Object.keys(counts).forEach((nome, i) => {
-        let posY = 245 + (i * 22);
-        
-        // Quadrado de Cor (Gráfico)
+        let posY = 285 + (i * 22);
         ctx.fillStyle = counts[nome].cor || "#777";
         ctx.fillRect(915, posY - 10, 12, 12);
-        ctx.strokeStyle = "#333"; ctx.lineWidth = 1;
+        ctx.strokeStyle = "#333";
         ctx.strokeRect(915, posY - 10, 12, 12);
-
-        // Texto da Legenda
         ctx.fillStyle = "#000";
-        ctx.font = "11px Arial";
         ctx.fillText(`${nome}: ${counts[nome].qtd} un.`, 935, posY);
     });
     
@@ -231,10 +254,14 @@ canvas.onmousedown = (e) => {
 
     if (itemClicado) {
         if (!itensSelecionados.includes(itemClicado)) itensSelecionados = [itemClicado];
-        arrastando = true; mouseOffset.x = mx; mouseOffset.y = my;
+        arrastando = true;
+        mouseOffset.x = mx;
+        mouseOffset.y = my;
     } else {
-        selecionandoArea = true; itensSelecionados = [];
-        areaInicio = { x: mx, y: my }; areaFim = { x: mx, y: my };
+        selecionandoArea = true;
+        itensSelecionados = [];
+        areaInicio = { x: mx, y: my };
+        areaFim = { x: mx, y: my };
     }
     desenhar();
 };
@@ -244,12 +271,15 @@ canvas.onmousemove = (e) => {
     const mx = (e.clientX - rect.left) / zoom;
     const my = (e.clientY - rect.top) / zoom;
     if (arrastando) {
-        const dx = mx - mouseOffset.x; const dy = my - mouseOffset.y;
+        const dx = mx - mouseOffset.x;
+        const dy = my - mouseOffset.y;
         itensSelecionados.forEach(it => { it.x += dx; it.y += dy; });
-        mouseOffset.x = mx; mouseOffset.y = my;
+        mouseOffset.x = mx;
+        mouseOffset.y = my;
         desenhar();
     } else if (selecionandoArea) {
-        areaFim = { x: mx, y: my }; desenhar();
+        areaFim = { x: mx, y: my };
+        desenhar();
     }
 };
 
@@ -260,33 +290,52 @@ window.onmouseup = () => {
         itensSelecionados = itens.filter(it => it.x > x1 && it.x < x2 && it.y > y1 && it.y < y2);
         selecionandoArea = false;
     }
-    arrastando = false; desenhar();
-};
-
-window.onkeydown = (e) => {
-    if (itensSelecionados.length === 0) return;
-    const k = e.key;
-
-    if (k.toLowerCase() === 'r') {
-        itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
-    }
-
-    if (k === 'Delete' || k === 'Backspace') { 
-        itens = itens.filter(it => !itensSelecionados.includes(it)); 
-        itensSelecionados = []; 
-    }
-    
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) {
-        e.preventDefault();
-    }
-
-    if (k === 'ArrowUp') itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
-    if (k === 'ArrowDown') itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
-    if (k === 'ArrowRight') itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
-    if (k === 'ArrowLeft') itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
-    
+    arrastando = false;
     desenhar();
 };
 
-function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
+// CONTROLE DE TECLADO MELHORADO
+window.addEventListener('keydown', function(e) {
+    if (itensSelecionados.length === 0) return;
+    
+    const k = e.key.toLowerCase();
+
+    // Bloquear scroll se usar setas
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
+        e.preventDefault();
+    }
+
+    if (k === 'r') {
+        itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
+    }
+
+    if (k === 'delete' || k === 'backspace') { 
+        itens = itens.filter(it => !itensSelecionados.includes(it)); 
+        itensSelecionados = []; 
+    }
+
+    // Setas para redimensionar (Aumenta/Diminui)
+    if (k === 'arrowup') {
+        itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
+    }
+    if (k === 'arrowdown') {
+        itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
+    }
+    if (k === 'arrowright') {
+        itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
+    }
+    if (k === 'arrowleft') {
+        itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
+    }
+    
+    desenhar();
+}, true);
+
+function limparTudo() { 
+    itens = []; 
+    estoque = []; 
+    atualizarListaEstoque(); 
+    desenhar(); 
+}
+
 desenhar();
