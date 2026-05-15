@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -12,22 +11,20 @@ let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
 let escalaAtualUsada = 30; 
-let quadranteAtivo = 'todos'; // 'todos', 'esq', 'dir', 'cima', 'baixo'
+let quadranteAtivo = 'todos'; 
 
 let selecionandoArea = false;
 let areaInicio = { x: 0, y: 0 };
 let areaFim = { x: 0, y: 0 };
 
-// --- 1. CARREGAMENTO DE ASSETS ---
+// --- 1. CARREGAMENTO DE ASSETS (TODOS OS SEUS ITENS) ---
 const imagens = {
     logo: new Image(),
-    "carro01": new Image(), "escada01": new Image(), "escada02": new Image(),
-    "escada03": new Image(), "mesa-de-sinuca": new Image(), "moto01": new Image(),
-    "piscina01": new Image(), "piscina02": new Image(), "piscina03": new Image(),
-    "piscina04": new Image(), "piscina05": new Image(), "piscina06": new Image(),
-    "Porta03": new Image(), "porta01": new Image(), "Porta02": new Image(),
-    "sala01": new Image(), "sala02": new Image(), "sala03": new Image(),
-    "sala04": new Image(), "sofa03": new Image(), "sofa04": new Image()
+    "carro01": new Image(), "escada01": new Image(), "escada02": new Image(), "escada03": new Image(),
+    "mesa-de-sinuca": new Image(), "moto01": new Image(), "piscina01": new Image(), "piscina02": new Image(),
+    "piscina03": new Image(), "piscina04": new Image(), "piscina05": new Image(), "piscina06": new Image(),
+    "Porta03": new Image(), "porta01": new Image(), "Porta02": new Image(), "sala01": new Image(),
+    "sala02": new Image(), "sala03": new Image(), "sala04": new Image(), "sofa03": new Image(), "sofa04": new Image()
 };
 
 imagens.logo.src = 'assets/img/1574799294920.png';
@@ -55,7 +52,7 @@ imagens["sofa04"].src = 'assets/img/sofa04.png';
 
 Object.values(imagens).forEach(img => { img.onload = () => desenhar(); });
 
-// --- 2. BIBLIOTECA ---
+// --- 2. BIBLIOTECA COMPLETA ---
 const biblioteca = {
     'suite_master':    { nome: 'Suíte Master', w: 6.0, h: 5.0, alt: 2.8 },
     'suite_normal':    { nome: 'Suíte Normal', w: 4.0, h: 3.5, alt: 2.8 },
@@ -69,13 +66,27 @@ const biblioteca = {
     'area_servico':    { nome: 'Área de Serviço', w: 3.0, h: 2.0, alt: 2.8 },
     'corredor':        { nome: 'Corredor', w: 1.2, h: 4.0, alt: 2.8 },
     'garagem':         { nome: 'Garagem', w: 3.5, h: 5.5, alt: 2.5 },
-    'piscina':         { nome: 'Piscina Base', w: 3.0, h: 6.0, alt: 1.5 },
     'carro01': { nome: 'carro01', w: 2.2, h: 4.5, alt: 1.5, usaImg: true },
+    'escada01': { nome: 'escada01', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
+    'escada02': { nome: 'escada02', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
+    'escada03': { nome: 'escada03', w: 2.0, h: 2.0, alt: 2.8, usaImg: true },
+    'mesa-de-sinuca': { nome: 'mesa-de-sinuca', w: 2.5, h: 1.4, alt: 0.8, usaImg: true },
     'moto01': { nome: 'moto01', w: 0.8, h: 2.0, alt: 1.2, usaImg: true },
     'piscina01': { nome: 'piscina01', w: 4.0, h: 8.0, alt: 1.4, usaImg: true },
+    'piscina02': { nome: 'piscina02', w: 5.0, h: 3.0, alt: 1.4, usaImg: true },
+    'piscina03': { nome: 'piscina03', w: 6.0, h: 4.0, alt: 1.4, usaImg: true },
+    'piscina04': { nome: 'piscina04', w: 4.5, h: 4.5, alt: 1.4, usaImg: true },
+    'piscina05': { nome: 'piscina05', w: 3.5, h: 7.0, alt: 1.4, usaImg: true },
+    'piscina06': { nome: 'piscina06', w: 5.5, h: 5.5, alt: 1.4, usaImg: true },
     'porta01': { nome: 'porta01', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'Porta02': { nome: 'Porta02', w: 0.8, h: 0.1, alt: 2.1, usaImg: true },
+    'Porta03': { nome: 'Porta03', w: 0.9, h: 0.1, alt: 2.1, usaImg: true },
     'sala01': { nome: 'sala01', w: 4.0, h: 4.0, alt: 1.0, usaImg: true },
-    'sofa03': { nome: 'sofa03', w: 2.2, h: 0.9, alt: 0.85, usaImg: true }
+    'sala02': { nome: 'sala02', w: 3.5, h: 3.5, alt: 1.0, usaImg: true },
+    'sala03': { nome: 'sala03', w: 4.2, h: 4.2, alt: 1.0, usaImg: true },
+    'sala04': { nome: 'sala04', w: 3.8, h: 3.8, alt: 1.0, usaImg: true },
+    'sofa03': { nome: 'sofa03', w: 2.2, h: 0.9, alt: 0.85, usaImg: true },
+    'sofa04': { nome: 'sofa04', w: 2.5, h: 1.0, alt: 0.85, usaImg: true }
 };
 
 // --- 3. FUNÇÕES DE INTERFACE ---
@@ -127,16 +138,15 @@ function desenhar() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     desenharSeloTecnico();
-    desenharEixosEGrade(); // Marcação de Eixos A, B, C... 1, 2, 3...
+    desenharEixosEGrade(); 
     desenharEscalaTerreno();
 
-    const m_larg = parseFloat(document.getElementById('terr_larg').value) || 10;
     const m_comp = parseFloat(document.getElementById('terr_comp').value) || 10;
     const centroX = 450; 
     const centroY = 400;
 
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
-        // LÓGICA DE FILTRO POR QUADRANTE NO MODO RECORTE
+        // Filtro por Quadrante
         if (vistaLateral && quadranteAtivo !== 'todos') {
             if (quadranteAtivo === 'esq' && item.x > centroX) return;
             if (quadranteAtivo === 'dir' && item.x < centroX) return;
@@ -183,17 +193,10 @@ function desenhar() {
 
 function desenharEixosEGrade() {
     ctx.save();
-    ctx.font = "bold 14px Arial";
-    ctx.fillStyle = "#555";
-    ctx.textAlign = "center";
-    
-    // Eixos Numéricos (Topo) - 1, 2, 3...
+    ctx.font = "bold 14px Arial"; ctx.fillStyle = "#555"; ctx.textAlign = "center";
     for(let i=1; i<=9; i++) { ctx.fillText(i, i * 100, 30); }
-    // Eixos Alfabéticos (Lateral) - A, B, C...
     const letras = ["A", "B", "C", "D", "E", "F", "G", "H"];
     letras.forEach((l, i) => { ctx.fillText(l, 30, (i + 1) * 100); });
-
-    // Linhas de Quadrante Central (Cruz de orientação)
     ctx.strokeStyle = "rgba(0,0,0,0.1)";
     ctx.beginPath(); ctx.moveTo(450, 40); ctx.lineTo(450, 760); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(40, 400); ctx.lineTo(860, 400); ctx.stroke();
@@ -218,16 +221,14 @@ function desenharSeloTecnico() {
     ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
-    
     const cliente = document.getElementById('cli_nome')?.value || "---";
     ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
     ctx.fillText("PROJETO TÉCNICO", 910, 160);
-    ctx.font = "11px Arial";
-    ctx.fillText("CLIENTE: " + cliente, 910, 185);
+    ctx.font = "11px Arial"; ctx.fillText("CLIENTE: " + cliente, 910, 185);
     ctx.restore();
 }
 
-// --- EVENTOS DE MOUSE ---
+// --- EVENTOS ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
