@@ -16,10 +16,9 @@ let selecionandoArea = false;
 let areaInicio = { x: 0, y: 0 };
 let areaFim = { x: 0, y: 0 };
 
-// --- 1. CARREGAMENTO DE ASSETS (NOMES EXATOS DA IMAGEM) ---
+// --- 1. CARREGAMENTO DE ASSETS ---
 const imagens = {
     logo: new Image(),
-    // Assets da Imagem Enviada
     "carro01": new Image(),
     "escada01": new Image(),
     "escada02": new Image(),
@@ -41,14 +40,12 @@ const imagens = {
     "sala04": new Image(),
     "sofa03": new Image(),
     "sofa04": new Image(),
-    // Assets Originais
     mesa_4: new Image(), mesa_6: new Image(), mesa_8: new Image(),
     sofa_2: new Image(), sofa_3: new Image(),
     porta_simples: new Image(), porta_dupla: new Image(),
     janela_dupla: new Image(), janela_basculante: new Image()
 };
 
-// Caminhos dos arquivos
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens["carro01"].src = 'assets/img/carro01.png';
 imagens["escada01"].src = 'assets/img/escada01.png';
@@ -72,7 +69,6 @@ imagens["sala04"].src = 'assets/img/sala04.png';
 imagens["sofa03"].src = 'assets/img/sofa03.png';
 imagens["sofa04"].src = 'assets/img/sofa04.png';
 
-// Mantendo o listener para redesenhar quando as imagens carregarem
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
 });
@@ -95,7 +91,6 @@ const biblioteca = {
     'escada_reta':     { nome: 'Escada Reta', w: 1.0, h: 3.0, alt: 2.8 },
     'escada_l':        { nome: 'Escada L', w: 2.0, h: 2.0, alt: 2.8 },
     
-    // Itens da Imagem (Nomes IDÊNTICOS)
     'carro01': { nome: 'carro01', w: 2.2, h: 4.5, alt: 1.5, usaImg: true },
     'escada01': { nome: 'escada01', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
     'escada02': { nome: 'escada02', w: 1.0, h: 3.0, alt: 2.8, usaImg: true },
@@ -154,9 +149,8 @@ function ajustarZoom(delta) {
 
 function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
-function enviarDadosParaPapel() { desenhar(); }
 
-// --- 4. FUNÇÕES DE DESENHO (CORRIGIDO PARA EVITAR QUADRADOS) ---
+// --- 4. FUNÇÕES DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
@@ -188,26 +182,38 @@ function desenhar() {
         }
 
         const imgObj = imagens[item.tipo];
+        const isSelecionado = itensSelecionados.includes(item);
         
-        // VERIFICAÇÃO TÉCNICA: Só desenha se for asset de imagem E a imagem tiver carregado com sucesso
         if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0 && !vistaLateral) {
+            // Desenha apenas a imagem
             ctx.drawImage(imgObj, -w/2, -h/2, w, h);
+            
+            // Se estiver selecionado, mostra um contorno azul suave para indicar foco
+            if (isSelecionado) {
+                ctx.strokeStyle = "#0078d7";
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-w/2, -h/2, w, h);
+            }
         } else {
-            // Caso contrário, usa cor sólida (sem imagem quebrada)
+            // Desenho para cômodos/paredes (Mantém o contorno preto)
             ctx.fillStyle = item.cor || "#777";
             ctx.globalAlpha = 0.6;
             ctx.fillRect(-w/2, -h/2, w, h);
             ctx.globalAlpha = 1.0;
-        }
 
-        ctx.strokeStyle = (itensSelecionados.includes(item)) ? "#0078d7" : "#333";
-        ctx.lineWidth = (itensSelecionados.includes(item)) ? 3 : 1;
-        ctx.strokeRect(-w/2, -h/2, w, h);
+            ctx.strokeStyle = isSelecionado ? "#0078d7" : "#000"; // Borda preta se não selecionado
+            ctx.lineWidth = isSelecionado ? 3 : 1.5;
+            ctx.strokeRect(-w/2, -h/2, w, h);
+        }
         
-        ctx.fillStyle = "#000";
-        ctx.font = "bold 10px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText(vistaLateral ? `${item.nome} (${item.alt}m)` : item.nome, 0, 5);
+        // Texto apenas se não for imagem ou se for vista lateral
+        if (!item.usaImg || vistaLateral || isSelecionado) {
+            ctx.fillStyle = "#000";
+            ctx.font = "bold 10px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText(vistaLateral ? `${item.nome} (${item.alt}m)` : item.nome, 0, 5);
+        }
+        
         ctx.restore();
     });
 
@@ -221,7 +227,6 @@ function desenhar() {
     }
 }
 
-// --- RESTANTE DAS FUNÇÕES (INALTERADO) ---
 function desenharEscalaTerreno() {
     const m_larg = parseFloat(document.getElementById('terr_larg').value) || 0;
     const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
@@ -342,15 +347,11 @@ window.onmouseup = () => {
 window.addEventListener('keydown', function(e) {
     if (itensSelecionados.length === 0) return;
     const k = e.key.toLowerCase();
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
     if (k === 'r') itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
     if (k === 'delete' || k === 'backspace') { itens = itens.filter(it => !itensSelecionados.includes(it)); itensSelecionados = []; }
-    if (k === 'arrowup') itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
-    if (k === 'arrowdown') itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
-    if (k === 'arrowright') itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
-    if (k === 'arrowleft') itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
     desenhar();
 }, true);
 
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
 desenhar();
+8
