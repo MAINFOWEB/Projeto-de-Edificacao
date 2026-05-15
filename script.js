@@ -21,12 +21,17 @@ const imagens = {
     janela_dupla: new Image(), janela_basculante: new Image()
 };
 
+// Caminhos das imagens
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens.mesa_4.src = 'assets/img/mesa_4c.png';
 imagens.mesa_6.src = 'assets/img/mesa_6c.png';
 imagens.mesa_8.src = 'assets/img/mesa_8c.png';
 imagens.sofa_2.src = 'assets/img/sofa_2l.png';
 imagens.sofa_3.src = 'assets/img/sofa_3l.png';
+imagens.porta_simples.src = 'assets/img/porta_simples.png'; // Adicionado
+imagens.porta_dupla.src = 'assets/img/porta_dupla.png';     // Adicionado
+imagens.janela_dupla.src = 'assets/img/janela_dupla.png';   // Adicionado
+imagens.janela_basculante.src = 'assets/img/janela_basculante.png'; // Adicionado
 
 Object.values(imagens).forEach(img => img.onload = () => desenhar());
 
@@ -97,30 +102,22 @@ function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
 
-// FUNÇÃO DE ZOOM CORRIGIDA PARA ROLAGEM
+// FUNÇÃO DE ZOOM - CORREÇÃO DE PERFORMANCE
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
     
-    const canvasElement = document.getElementById('mainCanvas');
-    const container = document.getElementById('canvas-container');
-
-    // 1. Atualiza o tamanho real do elemento no navegador
-    canvasElement.style.width = (1200 * zoom) + "px";
-    canvasElement.style.height = (800 * zoom) + "px";
+    // Atualiza o tamanho visual do canvas para disparar o scroll do CSS
+    canvas.style.width = (1200 * zoom) + "px";
+    canvas.style.height = (800 * zoom) + "px";
     
-    // 2. Redesenha o conteúdo interno
     desenhar(); 
-
-    // 3. Força o scroll a recalcular (Dica: o overflow: auto fará o resto)
-    if(container) {
-        container.style.display = 'none';
-        container.offsetHeight; // Truque para forçar o browser a renderizar
-        container.style.display = 'block';
-    }
 }
+
 // --- 3. FUNÇÃO PRINCIPAL DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
+    
+    // Reseta a escala para desenhar limpo
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
@@ -190,7 +187,8 @@ function renderizarItemPlanta(item) {
     ctx.save();
     ctx.translate(item.x, item.y);
     ctx.rotate(item.rot * Math.PI / 180);
-    if (item.usaImg && imagens[item.tipo].complete) {
+    
+    if (item.usaImg && imagens[item.tipo] && imagens[item.tipo].complete) {
         ctx.drawImage(imagens[item.tipo], -w/2, -h/2, w, h);
     } else {
         ctx.fillStyle = item.cor;
@@ -198,9 +196,11 @@ function renderizarItemPlanta(item) {
         ctx.fillRect(-w/2, -h/2, w, h);
         ctx.globalAlpha = 1.0;
     }
+    
     ctx.strokeStyle = (selecionado === item) ? "blue" : "#333";
     ctx.lineWidth = (selecionado === item) ? 3 : 1;
     ctx.strokeRect(-w/2, -h/2, w, h);
+    
     ctx.fillStyle = "#000";
     ctx.font = "bold 10px Arial";
     ctx.textAlign = "center";
@@ -226,12 +226,15 @@ function desenharSeloTecnico() {
     const resp = document.getElementById('resp_tec').value || "MÁRCIO - BTI";
     const larg = document.getElementById('terr_larg').value || "0";
     const comp = document.getElementById('terr_comp').value || "0";
+    
     ctx.save();
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
+    
     if (imagens.logo.complete) ctx.drawImage(imagens.logo, 950, 30, 180, 120);
+    
     ctx.fillStyle = "#000";
     ctx.font = "bold 18px Arial";
     ctx.fillText("PROJETO TÉCNICO", 920, 180);
@@ -263,18 +266,17 @@ function desenharLegendaAutomatica() {
     ctx.restore();
 }
 
-// EVENTOS COM HITBOX MELHORADA (SELEÇÃO FÁCIL)
+// EVENTOS COM HITBOX MELHORADA
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) / zoom;
-    const my = (e.clientY - rect.top) / zoom;
+    const mx = (e.clientX - rect.left) / (rect.width / 1200);
+    const my = (e.clientY - rect.top) / (rect.height / 800);
     
     selecionado = [...itens].reverse().find(it => {
         const w = it.w * escalaAtualUsada; 
         const h = it.h * escalaAtualUsada;
-        // Hitbox: Mínimo de 20px de área de clique para itens finos (portas/janelas)
-        const clickW = Math.max(w, 20);
-        const clickH = Math.max(h, 20);
+        const clickW = Math.max(w, 25);
+        const clickH = Math.max(h, 25);
         return mx > it.x - clickW/2 && mx < it.x + clickW/2 && my > it.y - clickH/2 && my < it.y + clickH/2;
     });
     
@@ -289,8 +291,10 @@ canvas.onmousedown = (e) => {
 canvas.onmousemove = (e) => {
     if (arrastando && selecionado) {
         const rect = canvas.getBoundingClientRect();
-        selecionado.x = (e.clientX - rect.left) / zoom - mouseOffset.x;
-        selecionado.y = (e.clientY - rect.top) / zoom - mouseOffset.y;
+        const mx = (e.clientX - rect.left) / (rect.width / 1200);
+        const my = (e.clientY - rect.top) / (rect.height / 800);
+        selecionado.x = mx - mouseOffset.x;
+        selecionado.y = my - mouseOffset.y;
         desenhar();
     }
 };
@@ -309,4 +313,5 @@ window.onkeydown = (e) => {
     desenhar();
 };
 
+// Inicialização
 desenhar();
