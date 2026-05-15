@@ -6,7 +6,6 @@ let escalaPx = 30;
 let zoom = 1.0;
 let itens = [];      
 let estoque = [];    
-let selecionado = null; 
 let itensSelecionados = []; 
 let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
@@ -110,6 +109,7 @@ function desenhar() {
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Marca d'água central
     if (imagens.logo.complete) {
         ctx.save(); ctx.globalAlpha = 0.05;
         ctx.drawImage(imagens.logo, 150, 150, 600, 500); ctx.restore();
@@ -168,7 +168,6 @@ function desenharEscalaTerreno() {
 }
 
 function desenharSeloTecnico() {
-    // IDs corrigidos para bater com seu HTML
     const cliente = document.getElementById('cli_nome')?.value || "---";
     const resp = document.getElementById('resp_tec')?.value || "---";
     const larg = document.getElementById('terr_larg')?.value || "0";
@@ -179,19 +178,42 @@ function desenharSeloTecnico() {
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
     
-    ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
-    ctx.fillText("PROJETO TÉCNICO", 920, 50);
-    ctx.font = "11px Arial";
-    ctx.fillText("CLIENTE: " + cliente, 920, 80);
-    ctx.fillText("RESPONSÁVEL: " + resp, 920, 100);
-    ctx.fillText(`LOTE: ${larg}m x ${comp}m`, 920, 120);
+    // --- LOGOMARCA NO SELO ---
+    if (imagens.logo.complete) {
+        ctx.drawImage(imagens.logo, 910, 20, 80, 80);
+    }
 
-    ctx.font = "bold 12px Arial"; ctx.fillText("COMPONENTES:", 920, 160);
+    ctx.fillStyle = "#000"; ctx.font = "bold 14px Arial";
+    ctx.fillText("PROJETO TÉCNICO", 910, 120);
+    ctx.font = "11px Arial";
+    ctx.fillText("CLIENTE: " + cliente, 910, 145);
+    ctx.fillText("RESPONSÁVEL: " + resp, 910, 165);
+    ctx.fillText(`LOTE: ${larg}m x ${comp}m`, 910, 185);
+
+    // --- LEGENDA DE CORES E QUANTIDADES ---
+    ctx.font = "bold 12px Arial"; ctx.fillText("LEGENDA / QUANTIDADES:", 910, 220);
+    
     let counts = {};
-    itens.forEach(it => counts[it.nome] = (counts[it.nome] || 0) + 1);
-    Object.keys(counts).forEach((nome, i) => {
-        ctx.fillText(`${nome}: ${counts[nome]}`, 930, 185 + (i * 18));
+    itens.forEach(it => {
+        if(!counts[it.nome]) counts[it.nome] = { qtd: 0, cor: it.cor };
+        counts[it.nome].qtd++;
     });
+
+    Object.keys(counts).forEach((nome, i) => {
+        let posY = 245 + (i * 22);
+        
+        // Quadrado de Cor (Gráfico)
+        ctx.fillStyle = counts[nome].cor || "#777";
+        ctx.fillRect(915, posY - 10, 12, 12);
+        ctx.strokeStyle = "#333"; ctx.lineWidth = 1;
+        ctx.strokeRect(915, posY - 10, 12, 12);
+
+        // Texto da Legenda
+        ctx.fillStyle = "#000";
+        ctx.font = "11px Arial";
+        ctx.fillText(`${nome}: ${counts[nome].qtd} un.`, 935, posY);
+    });
+    
     ctx.restore();
 }
 
@@ -244,14 +266,25 @@ window.onmouseup = () => {
 window.onkeydown = (e) => {
     if (itensSelecionados.length === 0) return;
     const k = e.key;
-    if (k.toLowerCase() === 'r') itensSelecionados.forEach(it => it.rot += 15);
-    if (k === 'Delete') { itens = itens.filter(it => !itensSelecionados.includes(it)); itensSelecionados = []; }
+
+    if (k.toLowerCase() === 'r') {
+        itensSelecionados.forEach(it => { it.rot = (it.rot + 15) % 360; });
+    }
+
+    if (k === 'Delete' || k === 'Backspace') { 
+        itens = itens.filter(it => !itensSelecionados.includes(it)); 
+        itensSelecionados = []; 
+    }
     
-    // REDIMENSIONAR PELAS SETAS
-    if (k === 'ArrowUp') itensSelecionados.forEach(it => it.h = Math.max(0.1, it.h + 0.1));
-    if (k === 'ArrowDown') itensSelecionados.forEach(it => it.h = Math.max(0.1, it.h - 0.1));
-    if (k === 'ArrowRight') itensSelecionados.forEach(it => it.w = Math.max(0.1, it.w + 0.1));
-    if (k === 'ArrowLeft') itensSelecionados.forEach(it => it.w = Math.max(0.1, it.w - 0.1));
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(k)) {
+        e.preventDefault();
+    }
+
+    if (k === 'ArrowUp') itensSelecionados.forEach(it => it.h = Number((it.h + 0.1).toFixed(1)));
+    if (k === 'ArrowDown') itensSelecionados.forEach(it => it.h = Math.max(0.1, Number((it.h - 0.1).toFixed(1))));
+    if (k === 'ArrowRight') itensSelecionados.forEach(it => it.w = Number((it.w + 0.1).toFixed(1)));
+    if (k === 'ArrowLeft') itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
+    
     desenhar();
 };
 
