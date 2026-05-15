@@ -101,16 +101,23 @@ function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desen
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
     
-    // Atualiza o tamanho visual do canvas
-    canvas.style.width = (1200 * zoom) + "px";
-    canvas.style.height = (800 * zoom) + "px";
+    const canvasElement = document.getElementById('mainCanvas');
+    const container = document.getElementById('canvas-container');
+
+    // 1. Atualiza o tamanho real do elemento no navegador
+    canvasElement.style.width = (1200 * zoom) + "px";
+    canvasElement.style.height = (800 * zoom) + "px";
     
-    // Força a atualização do layout para as barras de rolagem
-    document.getElementById('canvas-container').scrollLeft = document.getElementById('canvas-container').scrollLeft;
-
+    // 2. Redesenha o conteúdo interno
     desenhar(); 
-}
 
+    // 3. Força o scroll a recalcular (Dica: o overflow: auto fará o resto)
+    if(container) {
+        container.style.display = 'none';
+        container.offsetHeight; // Truque para forçar o browser a renderizar
+        container.style.display = 'block';
+    }
+}
 // --- 3. FUNÇÃO PRINCIPAL DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
