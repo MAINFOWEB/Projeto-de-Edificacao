@@ -6,13 +6,19 @@ let escalaPx = 30;
 let zoom = 1.0;
 let itens = [];      
 let estoque = [];    
-let selecionado = null;
+let selecionado = null; // Item principal para redimensionar/girar
+let itensSelecionados = []; // Lista para seleção múltipla
 let arrastando = false;
 let mouseOffset = { x: 0, y: 0 };
 let vistaLateral = false;
 let escalaAtualUsada = 30; 
 
-// --- 1. CARREGAMENTO DE ASSETS (IMAGENS) ---
+// Variáveis para Seleção por Área
+let selecionandoArea = false;
+let areaInicio = { x: 0, y: 0 };
+let areaFim = { x: 0, y: 0 };
+
+// --- 1. CARREGAMENTO DE ASSETS ---
 const imagens = {
     logo: new Image(),
     mesa_4: new Image(), mesa_6: new Image(), mesa_8: new Image(),
@@ -20,7 +26,6 @@ const imagens = {
     porta_simples: new Image(), porta_dupla: new Image(),
     janela_dupla: new Image(), janela_basculante: new Image()
 };
-
 // Definição dos caminhos - Certifique-se que os arquivos existem nestas pastas
 imagens.logo.src = 'assets/img/1574799294920.png';
 imagens.mesa_4.src = 'assets/img/mesa_4c.png';
@@ -36,9 +41,8 @@ imagens.janela_basculante.src = 'assets/img/janela_basculante.png';
 // Redesenha o canvas assim que cada imagem terminar de carregar
 Object.values(imagens).forEach(img => {
     img.onload = () => desenhar();
-    img.onerror = () => console.warn("Aviso: Falha ao carregar imagem: " + img.src);
+    img.onerror = (e) => console.warn("Imagem não encontrada: " + e.target.src);
 });
-
 // --- 2. BIBLIOTECA DE COMPONENTES ---
 const biblioteca = {
     'suite_master': { nome: 'Suíte Master + Closet', w: 6.0, h: 5.0, alt: 2.8 },
@@ -66,8 +70,6 @@ const biblioteca = {
 };
 
 // --- 3. FUNÇÕES DE INTERFACE ---
-function enviarDadosParaPapel() { desenhar(); }
-
 function adicionarAoEstoque() {
     const tipo = document.getElementById('sel_tipo').value;
     const qtd = parseInt(document.getElementById('qtd_componente').value) || 1;
@@ -78,9 +80,7 @@ function adicionarAoEstoque() {
         for(let i = 0; i < qtd; i++) {
             estoque.push({ 
                 id: Date.now() + i + Math.random(), 
-                tipo, andar, cor, 
-                x: 300 + (i*15), y: 300 + (i*15), rot: 0, 
-                ...biblioteca[tipo] 
+                tipo, andar, cor, x: 200, y: 200, rot: 0, ...biblioteca[tipo] 
             });
         }
         atualizarListaEstoque();
@@ -104,10 +104,6 @@ function atualizarListaEstoque() {
     });
 }
 
-function desenharVistaLateral() { vistaLateral = true; desenhar(); }
-function voltarParaPlanta() { vistaLateral = false; desenhar(); }
-function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
-
 function ajustarZoom(delta) { 
     zoom = Math.max(0.2, Math.min(3.0, zoom + delta)); 
     canvas.style.width = (1200 * zoom) + "px";
@@ -115,201 +111,151 @@ function ajustarZoom(delta) {
     desenhar(); 
 }
 
-// --- 4. LÓGICA DE DESENHO ---
+// --- 4. FUNÇÕES DE DESENHO ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(zoom, 0, 0, zoom, 0, 0);
     ctx.clearRect(0, 0, canvas.width / zoom, canvas.height / zoom);
 
     if (imagens.logo.complete) {
-        ctx.save();
-        ctx.globalAlpha = 0.07;
-        ctx.drawImage(imagens.logo, 150, 150, 600, 500);
-        ctx.restore();
+        ctx.save(); ctx.globalAlpha = 0.05;
+        ctx.drawImage(imagens.logo, 150, 150, 600, 500); ctx.restore();
     }
 
     desenharSeloTecnico();
-    desenharLegendaAutomatica();
 
-    const m_larg = parseFloat(document.getElementById('terr_larg').value) || 0;
-    const m_comp = parseFloat(document.getElementById('terr_comp').value) || 0;
-
-    escalaAtualUsada = escalaPx;
-
-    if (m_larg > 0 && m_comp > 0 && !vistaLateral) {
-        const areaUtilW = 860;
-        const areaUtilH = 740;
-        if ((m_larg * escalaAtualUsada) > areaUtilW || (m_comp * escalaAtualUsada) > areaUtilH) {
-            const ratioW = areaUtilW / m_larg;
-            const ratioH = areaUtilH / m_comp;
-            escalaAtualUsada = Math.min(ratioW, ratioH) * 0.95;
-        }
-        const px_w = m_larg * escalaAtualUsada;
-        const px_h = m_comp * escalaAtualUsada;
-        const ox = (900 - px_w) / 2;
-        const oy = (800 - px_h) / 2;
-
-        ctx.save();
-        ctx.setLineDash([10, 5]);
-        ctx.strokeStyle = "red";
-        ctx.lineWidth = 2;
-        ctx.strokeRect(ox, oy, px_w, px_h);
-        ctx.fillStyle = "red";
-        ctx.font = "bold 14px Arial";
-        ctx.fillText(`LOTE: ${m_larg}m x ${m_comp}m (Escala 1:${Math.round(100 * (30/escalaAtualUsada))})`, ox, oy - 10);
-        ctx.restore();
-    }
-
-    if (vistaLateral) {
-        const yBase = 600;
-        ctx.save();
-        ctx.strokeStyle = "#8B4513";
-        ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(50, yBase); ctx.lineTo(850, yBase); ctx.stroke();
-        ctx.restore();
-    }
-
+    // Desenhar Itens do Andar Ativo
     itens.filter(it => it.andar === andarVisivel).forEach(item => {
-        vistaLateral ? renderizarItemCorte(item) : renderizarItemPlanta(item);
+        const w = item.w * escalaAtualUsada;
+        const h = item.h * escalaAtualUsada;
+        ctx.save();
+        ctx.translate(item.x, item.y);
+        ctx.rotate(item.rot * Math.PI / 180);
+
+        const imgObj = imagens[item.tipo];
+        if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
+            ctx.drawImage(imgObj, -w/2, -h/2, w, h);
+        } else {
+            ctx.fillStyle = item.cor || "#777";
+            ctx.globalAlpha = 0.6;
+            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.globalAlpha = 1.0;
+        }
+
+        // Borda de Destaque para Selecionados
+        if (itensSelecionados.includes(item)) {
+            ctx.strokeStyle = "#0078d7";
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-w/2 - 2, -h/2 - 2, w + 4, h + 4);
+        } else {
+            ctx.strokeStyle = "#333";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(-w/2, -h/2, w, h);
+        }
+
+        ctx.fillStyle = "#000"; ctx.font = "bold 10px Arial"; ctx.textAlign = "center";
+        ctx.fillText(item.nome, 0, 5);
+        ctx.restore();
     });
-}
 
-function renderizarItemPlanta(item) {
-    const w = item.w * escalaAtualUsada;
-    const h = item.h * escalaAtualUsada;
-    ctx.save();
-    ctx.translate(item.x, item.y);
-    ctx.rotate(item.rot * Math.PI / 180);
-    
-    const imgObj = imagens[item.tipo];
-    // CORREÇÃO: Verifica se a imagem existe, carregou e não tem erro antes de desenhar
-    if (item.usaImg && imgObj && imgObj.complete && imgObj.naturalWidth !== 0) {
-        ctx.drawImage(imgObj, -w/2, -h/2, w, h);
-    } else {
-        ctx.fillStyle = item.cor;
-        ctx.globalAlpha = 0.7;
-        ctx.fillRect(-w/2, -h/2, w, h);
-        ctx.globalAlpha = 1.0;
+    // Desenha o Retângulo de Seleção (Marquee)
+    if (selecionandoArea) {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0); // Desenha por cima de tudo sem zoom interno
+        ctx.fillStyle = "rgba(0, 120, 215, 0.2)";
+        ctx.strokeStyle = "#0078d7";
+        const rx = areaInicio.x * zoom;
+        const ry = areaInicio.y * zoom;
+        const rw = (areaFim.x - areaInicio.x) * zoom;
+        const rh = (areaFim.y - areaInicio.y) * zoom;
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeRect(rx, ry, rw, rh);
+        ctx.restore();
     }
-    
-    ctx.strokeStyle = (selecionado === item) ? "blue" : "#333";
-    ctx.lineWidth = (selecionado === item) ? 3 : 1;
-    ctx.strokeRect(-w/2, -h/2, w, h);
-    
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 10px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(item.nome, 0, 5);
-    ctx.restore();
-}
-
-function renderizarItemCorte(item) {
-    const w = item.w * escalaAtualUsada;
-    const alt = item.alt * escalaAtualUsada;
-    const yBase = 600;
-    ctx.fillStyle = item.cor;
-    ctx.fillRect(item.x - w/2, yBase - alt, w, alt);
-    ctx.strokeStyle = "#000";
-    ctx.strokeRect(item.x - w/2, yBase - alt, w, alt);
-    ctx.fillStyle = "#000";
-    ctx.font = "9px Arial";
-    ctx.fillText(`${item.alt}m`, item.x - 5, yBase - alt - 5);
 }
 
 function desenharSeloTecnico() {
-    const cli = document.getElementById('cli_nome').value || "---";
-    const resp = document.getElementById('resp_tec').value || "MÁRCIO - BTI";
-    const larg = document.getElementById('terr_larg').value || "0";
-    const comp = document.getElementById('terr_comp').value || "0";
-    ctx.save();
-    ctx.strokeStyle = "#000";
-    ctx.lineWidth = 2;
+    ctx.save(); ctx.strokeStyle = "#000"; ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
-    if (imagens.logo.complete) ctx.drawImage(imagens.logo, 950, 30, 180, 120);
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText("PROJETO TÉCNICO", 920, 180);
-    ctx.font = "12px Arial";
-    ctx.fillText(`CLIENTE: ${cli.toUpperCase()}`, 920, 210);
-    ctx.fillText(`RESP.: ${resp.toUpperCase()}`, 920, 230);
-    ctx.fillText(`TERRENO: ${larg}m x ${comp}m`, 920, 250);
+    ctx.fillStyle = "#000"; ctx.font = "bold 16px Arial";
+    ctx.fillText("PROJETO TÉCNICO", 920, 50);
     ctx.restore();
 }
 
-function desenharLegendaAutomatica() {
-    let y = 300;
-    ctx.save();
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 14px Arial";
-    ctx.fillText("LEGENDA E QUANTIDADES:", 920, y);
-    y += 25;
-    const contagem = {};
-    itens.forEach(it => { contagem[it.nome] = (contagem[it.nome] || 0) + 1; });
-    Object.keys(contagem).forEach(nome => {
-        const it = itens.find(i => i.nome === nome);
-        if(!it) return;
-        ctx.fillStyle = it.cor;
-        ctx.fillRect(920, y - 12, 15, 15);
-        ctx.strokeStyle = "#000"; ctx.strokeRect(920, y - 12, 15, 15);
-        ctx.fillStyle = "#000"; ctx.font = "12px Arial";
-        ctx.fillText(`${nome}: ${contagem[nome]} un.`, 945, y);
-        y += 22;
-    });
-    ctx.restore();
-}
-
-// --- 5. EVENTOS DE INTERAÇÃO ---
+// --- 5. EVENTOS DE INTERAÇÃO (COM SELEÇÃO MÚLTIPLA) ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
-    const ratioX = 1200 / rect.width;
-    const ratioY = 800 / rect.height;
-    const mx = (e.clientX - rect.left) * ratioX;
-    const my = (e.clientY - rect.top) * ratioY;
+    const mx = (e.clientX - rect.left) * (1200 / rect.width);
+    const my = (e.clientY - rect.top) * (800 / rect.height);
     
-    selecionado = [...itens].reverse().find(it => {
-        const w = it.w * escalaAtualUsada; 
+    const itemClicado = [...itens].reverse().find(it => {
+        const w = it.w * escalaAtualUsada;
         const h = it.h * escalaAtualUsada;
-        const clickW = Math.max(w, 30);
-        const clickH = Math.max(h, 30);
-        return mx > it.x - clickW/2 && mx < it.x + clickW/2 && my > it.y - clickH/2 && my < it.y + clickH/2;
+        return mx > it.x - w/2 && mx < it.x + w/2 && my > it.y - h/2 && my < it.y + h/2;
     });
-    
-    if (selecionado) {
+
+    if (itemClicado) {
+        if (!itensSelecionados.includes(itemClicado)) {
+            itensSelecionados = [itemClicado];
+        }
+        selecionado = itemClicado;
         arrastando = true;
-        mouseOffset.x = mx - selecionado.x;
-        mouseOffset.y = my - selecionado.y;
+        mouseOffset.x = mx;
+        mouseOffset.y = my;
+    } else {
+        selecionandoArea = true;
+        itensSelecionados = [];
+        areaInicio = { x: mx, y: my };
+        areaFim = { x: mx, y: my };
     }
     desenhar();
 };
 
 canvas.onmousemove = (e) => {
-    if (arrastando && selecionado) {
-        const rect = canvas.getBoundingClientRect();
-        const ratioX = 1200 / rect.width;
-        const ratioY = 800 / rect.height;
-        selecionado.x = (e.clientX - rect.left) * ratioX - mouseOffset.x;
-        selecionado.y = (e.clientY - rect.top) * ratioY - mouseOffset.y;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) * (1200 / rect.width);
+    const my = (e.clientY - rect.top) * (800 / rect.height);
+
+    if (arrastando) {
+        const dx = mx - mouseOffset.x;
+        const dy = my - mouseOffset.y;
+        itensSelecionados.forEach(it => { it.x += dx; it.y += dy; });
+        mouseOffset.x = mx;
+        mouseOffset.y = my;
+        desenhar();
+    } else if (selecionandoArea) {
+        areaFim = { x: mx, y: my };
         desenhar();
     }
 };
 
-window.onmouseup = () => arrastando = false;
-
-window.onkeydown = (e) => {
-    if (!selecionado) return;
-    const k = e.key.toLowerCase();
-    if (k === 'r') selecionado.rot += 15;
-    if (k === 'delete' || k === 'backspace') { 
-        itens = itens.filter(it => it !== selecionado); 
-        selecionado = null; 
+window.onmouseup = () => {
+    if (selecionandoArea) {
+        const xMin = Math.min(areaInicio.x, areaFim.x);
+        const xMax = Math.max(areaInicio.x, areaFim.x);
+        const yMin = Math.min(areaInicio.y, areaFim.y);
+        const yMax = Math.max(areaInicio.y, areaFim.y);
+        itensSelecionados = itens.filter(it => it.x > xMin && it.x < xMax && it.y > yMin && it.y < yMax);
+        selecionandoArea = false;
     }
-    if (e.key === 'ArrowUp') selecionado.h += 0.1;
-    if (e.key === 'ArrowDown') selecionado.h -= 0.1;
-    if (e.key === 'ArrowRight') selecionado.w += 0.1;
-    if (e.key === 'ArrowLeft') selecionado.w -= 0.1;
+    arrastando = false;
     desenhar();
 };
 
-// Inicia o desenho
+window.onkeydown = (e) => {
+    if (itensSelecionados.length === 0) return;
+    const k = e.key.toLowerCase();
+    if (k === 'r') itensSelecionados.forEach(it => it.rot += 15);
+    if (k === 'delete' || k === 'backspace') {
+        itens = itens.filter(it => !itensSelecionados.includes(it));
+        itensSelecionados = [];
+    }
+    desenhar();
+};
+
+// --- FUNÇÕES EXTRAS ---
+function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
+function enviarDadosParaPapel() { desenhar(); }
+
 desenhar();
