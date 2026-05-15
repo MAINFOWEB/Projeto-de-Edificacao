@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação</title>
+    <title>Projeto de Edificação - Prancha Técnica</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -10,6 +11,18 @@
 <div id="sidebar">
     <h3 class="titulo-topo">Projeto de <span class="azul">Edificação</span></h3>
     
+    <div id="controles-quadrantes" class="section" style="display: none; background: #222; padding: 15px; border-radius: 8px; border: 1px solid #ff9800; margin-bottom: 15px;">
+        <label style="color: #ff9800; font-weight: bold; display: block; margin-bottom: 10px; text-align: center;">✂️ FILTRAR RECORTE</label>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <button onclick="mudarQuadrante('esq')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">ESQUERDO</button>
+            <button onclick="mudarQuadrante('dir')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">DIREITO</button>
+            <button onclick="mudarQuadrante('cima')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">EM CIMA</button>
+            <button onclick="mudarQuadrante('baixo')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">EM BAIXO</button>
+            <button onclick="mudarQuadrante('todos')" style="grid-column: span 2; background: #ff9800; color: black; font-weight: bold; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">VER TUDO (LIMPAR)</button>
+        </div>
+        <small style="color: #aaa; display: block; margin-top: 10px; text-align: center; font-size: 10px;">Esconde o que está fora do lado escolhido.</small>
+    </div>
+
     <div class="bloco-config">
         <label>🎨 COR DO CÔMODO</label>
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -27,9 +40,6 @@
             <span style="color: #eee; align-self: center;">x</span>
             <input type="number" id="terr_comp" placeholder="Comp. (m)">
         </div>
-        <button onclick="enviarDadosParaPapel()" style="background-color: #00d2ff; color: #000; font-weight: bold; margin-top: 10px; width: 100%; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
-            ENVIAR PARA O PAPEL
-        </button>
     </div>
 
     <div class="section">
@@ -50,9 +60,9 @@
 
     <div class="section">
         <button onclick="desenharVistaLateral()" style="background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            📐 VER VISTA LATERAL (2D)
+            📐 VER VISTA LATERAL (CORTES)
         </button>
-        <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer;">
+        <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer; background: #555; color: white; border: none; border-radius: 5px;">
             ⬅️ VOLTAR PARA PLANTA
         </button>
     </div>
@@ -61,7 +71,6 @@
         <label>📐 COMPONENTE</label>
         <select id="sel_tipo">
             <optgroup label="Assets da Imagem">
-
                 <option value="carro01">carro01</option>
                 <option value="moto01">moto01</option>
                 <option value="escada01">escada01</option>
@@ -83,11 +92,9 @@
                 <option value="sala04">sala04</option>
                 <option value="sofa03">sofa03</option>
                 <option value="sofa04">sofa04</option>
-
             </optgroup>
 
             <optgroup label="Cômodos">
-
                 <option value="kitnet">Kitnet</option>
                 <option value="suite_master">Suíte Master</option>
                 <option value="suite_normal">Suíte Normal</option>
@@ -100,26 +107,17 @@
                 <option value="sala">Sala de Estar</option>
                 <option value="cozinha">Cozinha</option>
                 <option value="garagem">Garagem</option>
-
             </optgroup>
         </select>
         <div style="display: flex; gap: 5px; margin-top: 5px;">
             <input type="number" id="qtd_componente" value="1" min="1" style="width: 60px; padding: 5px;">
-            <button class="btn-add" onclick="adicionarAoEstoque()" style="flex: 1;">MANDAR PARA ESTOQUE</button>
+            <button class="btn-add" onclick="adicionarAoEstoque()" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">MANDAR PARA ESTOQUE</button>
         </div>
     </div>
 
-    <div class="section" style="font-size: 11px; line-height: 1.4; color: #ccc;">
-        <label>📖 MANUAL DE COMANDOS</label>
-        • <b>Mouse:</b> Arraste para mover<br>
-        • <b>R:</b> Girar item selecionado<br>
-        • <b>DEL:</b> Apagar item<br>
-        • <b>SETAS:</b> Redimensionar (+/- 0.1m)
-    </div>
-
     <div class="section" style="margin-top: 20px;">
-        <button class="btn-print" onclick="window.print()" style="width: 100%; margin-bottom: 10px;">🖨️ GERAR PDF / IMPRIMIR</button>
-        <button class="btn-reset" onclick="limparTudo()" style="width: 100%;">REINICIAR TUDO</button>
+        <button class="btn-print" onclick="window.print()" style="width: 100%; padding: 10px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">🖨️ GERAR PDF / IMPRIMIR</button>
+        <button class="btn-reset" onclick="limparTudo()" style="width: 100%; margin-top: 5px; padding: 10px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">REINICIAR TUDO</button>
     </div>
 </div>
 
