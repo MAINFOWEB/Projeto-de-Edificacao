@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Projeto de Edificação - Prancha Técnica</title>
+    <title>Projeto de Edificação</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,18 +10,6 @@
 <div id="sidebar">
     <h3 class="titulo-topo">Projeto de <span class="azul">Edificação</span></h3>
     
-    <div id="controles-quadrantes" class="section" style="display: none; background: #222; padding: 15px; border-radius: 8px; border: 1px solid #ff9800; margin-bottom: 15px;">
-        <label style="color: #ff9800; font-weight: bold; display: block; margin-bottom: 10px; text-align: center;">✂️ FILTRAR RECORTE</label>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <button onclick="mudarQuadrante('esq')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">ESQUERDO</button>
-            <button onclick="mudarQuadrante('dir')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">DIREITO</button>
-            <button onclick="mudarQuadrante('cima')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">EM CIMA</button>
-            <button onclick="mudarQuadrante('baixo')" style="background: #444; color: white; border: 1px solid #666; padding: 5px; cursor: pointer; border-radius: 4px;">EM BAIXO</button>
-            <button onclick="mudarQuadrante('todos')" style="grid-column: span 2; background: #ff9800; color: black; font-weight: bold; border: none; padding: 8px; border-radius: 4px; cursor: pointer;">VER TUDO (LIMPAR)</button>
-        </div>
-        <small style="color: #aaa; display: block; margin-top: 10px; text-align: center; font-size: 10px;">Esconde o que está fora do lado escolhido.</small>
-    </div>
-
     <div class="bloco-config">
         <label>🎨 COR DO CÔMODO</label>
         <div style="display: flex; align-items: center; gap: 10px;">
@@ -32,14 +19,28 @@
     </div>
 
     <div class="bloco-config">
-        <label>📋 DADOS TÉCNICOS</label>
-        <input type="text" id="cli_nome" placeholder="Nome do Cliente">
-        <input type="text" id="resp_tec" placeholder="Responsável Técnico">
-        <div style="display: flex; gap: 5px; margin-top: 5px;">
-            <input type="number" id="terr_larg" placeholder="Larg. (m)">
-            <span style="color: #eee; align-self: center;">x</span>
-            <input type="number" id="terr_comp" placeholder="Comp. (m)">
+        <label>📋 REGISTRO TÉCNICO DO PROJETO</label>
+        <input type="text" id="proj_obra" placeholder="Tipo de Obra (Ex: Residencial)" value="CONSTRUÇÃO RESIDENCIAL UNIFAMILIAR">
+        <input type="text" id="proj_local" placeholder="Endereço / Logradouro">
+        <div style="display: flex; gap: 4px;">
+            <input type="text" id="proj_lote" placeholder="Lote nº">
+            <input type="text" id="proj_quadra" placeholder="Quadra nº">
         </div>
+        <div style="display: flex; gap: 4px; margin-top: 4px;">
+            <input type="text" id="proj_bairro" placeholder="Bairro">
+            <input type="text" id="proj_cidade" placeholder="Cidade/UF" value="Itanhaém/SP">
+        </div>
+        <input type="text" id="cli_nome" placeholder="Nome do Proprietário / Cliente">
+        <input type="text" id="resp_tec" placeholder="Responsável Técnico / CREA-CAU">
+        
+        <div style="display: flex; gap: 5px; margin-top: 8px; border-top: 1px solid #44px; padding-top: 5px;">
+            <input type="number" id="terr_larg" placeholder="Larg. Lote (m)" value="10">
+            <span style="color: #eee; align-self: center;">x</span>
+            <input type="number" id="terr_comp" placeholder="Comp. Lote (m)" value="20">
+        </div>
+        <button onclick="enviarDadosParaPapel()" style="background-color: #00d2ff; color: #000; font-weight: bold; margin-top: 10px; width: 100%; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+            🔄 ATUALIZAR SELO / TERRENO
+        </button>
     </div>
 
     <div class="section">
@@ -60,17 +61,34 @@
 
     <div class="section">
         <button onclick="desenharVistaLateral()" style="background-color: #ff9800; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer; font-weight: bold;">
-            📐 VER VISTA LATERAL (CORTES)
+            📐 VER VISTA LATERAL (2D)
         </button>
-        <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer; background: #555; color: white; border: none; border-radius: 5px;">
+        <button onclick="voltarParaPlanta()" style="margin-top: 5px; width: 100%; padding: 5px; cursor: pointer;">
             ⬅️ VOLTAR PARA PLANTA
         </button>
     </div>
 
     <div class="section">
-        <label>📐 COMPONENTE</label>
+        <label>📐 ADICIONAR COMPONENTE</label>
         <select id="sel_tipo">
-            <optgroup label="Assets da Imagem">
+            <optgroup label="Cômodos Principais">
+                <option value="suite_master">Suíte Master</option>
+                <option value="suite_normal">Suíte Normal</option>
+                <option value="kitnet">Kitnet</option>
+                <option value="quarto">Quarto</option>
+                <option value="sala">Sala de Estar</option>
+                <option value="cozinha">Cozinha</option>
+                <option value="banheiro">Banheiro Social</option>
+                <option value="banheiro_duplo">Banheiro Duplo</option>
+                <option value="corredor">Corredor</option>
+                <option value="garagem">Garagem</option>
+            </optgroup>
+            <optgroup label="Área Externa & Serviços">
+                <option value="lavanderia">Lavanderia</option>
+                <option value="area_servico">Área de Serviço</option>
+                <option value="piscina">Piscina Base</option>
+            </optgroup>
+            <optgroup label="Assets Gráficos (.png)">
                 <option value="carro01">carro01</option>
                 <option value="moto01">moto01</option>
                 <option value="escada01">escada01</option>
@@ -83,9 +101,9 @@
                 <option value="piscina04">piscina04</option>
                 <option value="piscina05">piscina05</option>
                 <option value="piscina06">piscina06</option>
-                <option value="porta01">porta01</option>
-                <option value="Porta02">Porta02</option>
-                <option value="Porta03">Porta03</option>
+                <option value="porta">porta</option>
+                <option value="Porta-Sanfonada">Porta-Sanfonada</option>
+                <option value="Porta direita 90D-13">Porta direita 90D-13</option>
                 <option value="sala01">sala01</option>
                 <option value="sala02">sala02</option>
                 <option value="sala03">sala03</option>
@@ -93,31 +111,24 @@
                 <option value="sofa03">sofa03</option>
                 <option value="sofa04">sofa04</option>
             </optgroup>
-
-            <optgroup label="Cômodos">
-                <option value="kitnet">Kitnet</option>
-                <option value="suite_master">Suíte Master</option>
-                <option value="suite_normal">Suíte Normal</option>
-                <option value="quarto">Quarto</option>
-                <option value="corredor">Corredor</option>
-                <option value="banheiro">Banheiro Social</option>
-                <option value="banheiro_duplo">Banheiro Duplo</option>
-                <option value="area_servico">Área de Serviço</option>
-                <option value="lavanderia">Lavanderia</option>
-                <option value="sala">Sala de Estar</option>
-                <option value="cozinha">Cozinha</option>
-                <option value="garagem">Garagem</option>
-            </optgroup>
         </select>
         <div style="display: flex; gap: 5px; margin-top: 5px;">
             <input type="number" id="qtd_componente" value="1" min="1" style="width: 60px; padding: 5px;">
-            <button class="btn-add" onclick="adicionarAoEstoque()" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 8px; cursor: pointer; border-radius: 4px; font-weight: bold;">MANDAR PARA ESTOQUE</button>
+            <button class="btn-add" onclick="adicionarAoEstoque()" style="flex: 1;">MANDAR PARA ESTOQUE</button>
         </div>
     </div>
 
-    <div class="section" style="margin-top: 20px;">
-        <button class="btn-print" onclick="window.print()" style="width: 100%; padding: 10px; background: #2196F3; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">🖨️ GERAR PDF / IMPRIMIR</button>
-        <button class="btn-reset" onclick="limparTudo()" style="width: 100%; margin-top: 5px; padding: 10px; background: #f44336; color: white; border: none; border-radius: 5px; cursor: pointer;">REINICIAR TUDO</button>
+    <div class="section" style="font-size: 11px; line-height: 1.4; color: #ccc;">
+        <label>📖 MANUAL DE USO</label>
+        • Move os blocos clicando e arrastando.<br>
+        • Aperte <b>R</b> para girar o bloco ativo.<br>
+        • Aperte <b>DEL</b> ou <b>Backspace</b> para remover.<br>
+        • Use as <b>SETAS</b> do teclado para ajustar as dimensões do cômodo ativo (+/- 10cm).
+    </div>
+
+    <div class="section" style="margin-top: 15px;">
+        <button class="btn-print" onclick="window.print()" style="width: 100%; margin-bottom: 8px;">🖨️ GERAR PDF / IMPRIMIR</button>
+        <button class="btn-reset" onclick="limparTudo()" style="width: 100%;">REINICIAR PLANTA</button>
     </div>
 </div>
 
@@ -133,7 +144,7 @@
 </div>
 
 <div id="inventory">
-    <h4>📦 ESTOQUE</h4>
+    <h4>📦 ESTOQUE DE COMPONENTES</h4>
     <div id="lista-estoque"></div>
 </div>
 
