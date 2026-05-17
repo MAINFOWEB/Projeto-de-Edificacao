@@ -148,7 +148,7 @@ function desenharVistaLateral() { vistaLateral = true; desenhar(); }
 function voltarParaPlanta() { vistaLateral = false; desenhar(); }
 function enviarDadosParaPapel() { desenhar(); }
 
-// --- 4. FUNÇÕES DE DESENHO ---
+// --- 4. FUNÇÕES DE DESENHO CONTROLE ---
 function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
@@ -200,9 +200,18 @@ function desenhar() {
             ctx.strokeRect(-w/2, -h/2, w, h);
             
             ctx.fillStyle = "#000";
-            ctx.font = "bold 10px Arial";
             ctx.textAlign = "center";
-            ctx.fillText(vistaLateral ? `${item.nome} (${item.alt}m)` : item.nome, 0, 5);
+            
+            if (vistaLateral) {
+                ctx.font = "bold 10px Arial";
+                ctx.fillText(`${item.nome} (${item.alt}m)`, 0, 5);
+            } else {
+                ctx.font = "bold 10px Arial";
+                ctx.fillText(item.nome, 0, -2);
+                
+                ctx.font = "9px Arial";
+                ctx.fillText(`${item.w.toFixed(2)} x ${item.h.toFixed(2)}m`, 0, 10);
+            }
         }
         ctx.restore();
     });
@@ -236,9 +245,8 @@ function desenharEscalaTerreno() {
     }
 }
 
-// --- 5. NOVO SELO TÉCNICO COMPLETO (INSPIRADO NOS PRINTS) ---
+// --- 5. SELO TÉCNICO COMPLETO COM DUAS COLUNAS E ZONAS DE LOCALIZAÇÃO (A-E, 1-4) ---
 function desenharSeloTecnico() {
-    // Resgate de todas as informações inseridas na interface
     const cliente = document.getElementById('cli_nome')?.value || "---";
     const resp = document.getElementById('resp_tec')?.value || "---";
     const larg = parseFloat(document.getElementById('terr_larg')?.value) || 0;
@@ -249,7 +257,7 @@ function desenharSeloTecnico() {
     const loteNum = document.getElementById('proj_lote')?.value || "---";
     const quadraNum = document.getElementById('proj_quadra')?.value || "---";
     const bairro = document.getElementById('proj_bairro')?.value || "---";
-    const cidade = document.getElementById('proj_cidade')?.value || "---";
+    const city = document.getElementById('proj_cidade')?.value || "---";
 
     const areaTerreno = (larg * comp).toFixed(2);
     let areaConstruida = 0;
@@ -259,17 +267,70 @@ function desenharSeloTecnico() {
     areaConstruida = areaConstruida.toFixed(2);
 
     ctx.save();
-    // Borda da Folha
+    // Borda Externa da Folha
     ctx.strokeStyle = "#000";
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, 1180, 780);
     
-    // Divisão da área de desenho e selo
+    // Divisão Lateral da Folha (Área útil vs Selo)
     ctx.beginPath(); ctx.moveTo(900, 10); ctx.lineTo(900, 790); ctx.stroke();
     
+    // -------------------------------------------------------------
+    // ADICIONADO: QUADRO DE ZONAS E COORDENADAS (BORDAS INTERNAS)
+    // -------------------------------------------------------------
+    ctx.strokeStyle = "#bbb";
+    ctx.lineWidth = 1;
+    // Borda fina de marcação interna das zonas de localização
+    ctx.strokeRect(25, 25, 860, 750);
+    
+    ctx.fillStyle = "#555";
+    ctx.font = "bold 11px Arial";
+    ctx.textAlign = "center";
+    
+    // Coordenadas Horizontais (Números 1 a 4) nas bordas superior e inferior
+    const numZonasH = 4;
+    const espacoH = 860 / numZonasH;
+    for(let i = 0; i < numZonasH; i++) {
+        let xCentro = 25 + (i * espacoH) + (espacoH / 2);
+        // Texto na borda superior e inferior
+        ctx.fillText(i + 1, xCentro, 20);
+        ctx.fillText(i + 1, xCentro, 787);
+        
+        // Linhas de divisão de quadrantes tracejadas bem sutis
+        if (i > 0) {
+            ctx.beginPath();
+            ctx.setLineDash([2, 8]);
+            ctx.moveTo(25 + (i * espacoH), 25);
+            ctx.lineTo(25 + (i * espacoH), 775);
+            ctx.stroke();
+        }
+    }
+    
+    // Coordenadas Verticais (Letras A a E) nas bordas esquerda e direita
+    const letrasZonasV = ['A', 'B', 'C', 'D', 'E'];
+    const espacoV = 750 / letrasZonasV.length;
+    ctx.textBaseline = "middle";
+    for(let j = 0; j < letrasZonasV.length; j++) {
+        let yCentro = 25 + (j * espacoV) + (espacoV / 2);
+        // Letra na borda esquerda e borda direita da área útil
+        ctx.fillText(letrasZonasV[j], 17, yCentro);
+        ctx.fillText(letrasZonasV[j], 892, yCentro);
+        
+        // Linhas de divisão verticais tracejadas
+        if (j > 0) {
+            ctx.beginPath();
+            ctx.setLineDash([2, 8]);
+            ctx.moveTo(25, 25 + (j * espacoV));
+            ctx.lineTo(885, 25 + (j * espacoV));
+            ctx.stroke();
+        }
+    }
+    ctx.setLineDash([]); // Reset do tracejado
+    ctx.textBaseline = "alphabetic"; // Reset do alinhamento vertical de texto
+    // -------------------------------------------------------------
+
     let xSelo = 910;
     
-    // 1. LOGO E CABEÇALHO
     if (imagens.logo.complete) {
         ctx.drawImage(imagens.logo, 990, 20, 100, 100);
     }
@@ -279,10 +340,8 @@ function desenharSeloTecnico() {
     ctx.font = "bold 15px Arial";
     ctx.fillText("PROJETO DE EDIFICAÇÃO", 1050, 140);
     
-    // Linha divisória
     ctx.beginPath(); ctx.moveTo(900, 155); ctx.lineTo(1190, 155); ctx.stroke();
     
-    // 2. DADOS DA OBRA E LOCALIZAÇÃO
     ctx.textAlign = "left";
     ctx.font = "bold 11px Arial"; ctx.fillText("PROJETO / OBRA:", xSelo, 175);
     ctx.font = "11px Arial"; ctx.fillText(obra, xSelo, 190);
@@ -291,11 +350,10 @@ function desenharSeloTecnico() {
     ctx.font = "11px Arial"; ctx.fillText(local, xSelo, 230);
     
     ctx.font = "bold 11px Arial"; ctx.fillText(`LOTE: ${loteNum}   |   QUADRA: ${quadraNum}`, xSelo, 255);
-    ctx.fillText(`BAIRRO: ${bairro}   |   CIDADE: ${cidade}`, xSelo, 275);
+    ctx.fillText(`BAIRRO: ${bairro}   |   CIDADE: ${city}`, xSelo, 275);
     
     ctx.beginPath(); ctx.moveTo(900, 290); ctx.lineTo(1190, 290); ctx.stroke();
     
-    // 3. PROPRIETÁRIO E RESPONSÁVEL
     ctx.font = "bold 11px Arial"; ctx.fillText("PROPRIETÁRIO / CLIENTE:", xSelo, 310);
     ctx.font = "11px Arial"; ctx.fillText(cliente, xSelo, 325);
     
@@ -304,15 +362,14 @@ function desenharSeloTecnico() {
     
     ctx.beginPath(); ctx.moveTo(900, 385); ctx.lineTo(1190, 385); ctx.stroke();
     
-    // 4. QUADRO DE ÁREAS (Tabela profissional inspirada na imagem)
     ctx.font = "bold 12px Arial"; ctx.fillText("QUADRO DE ÁREAS", xSelo, 405);
     
     let yTab = 415;
     ctx.strokeRect(910, yTab, 270, 60);
     ctx.beginPath();
-    ctx.moveTo(910, yTab + 20); ctx.lineTo(1180, yTab + 20); // Linha horiz central
-    ctx.moveTo(910, yTab + 40); ctx.lineTo(1180, yTab + 40); // Linha horiz inferior
-    ctx.moveTo(1070, yTab); ctx.lineTo(1070, yTab + 60);     // Linha vert divisão
+    ctx.moveTo(910, yTab + 20); ctx.lineTo(1180, yTab + 20);
+    ctx.moveTo(910, yTab + 40); ctx.lineTo(1180, yTab + 40);
+    ctx.moveTo(1070, yTab); ctx.lineTo(1070, yTab + 60);
     ctx.stroke();
     
     ctx.font = "11px Arial";
@@ -327,7 +384,6 @@ function desenharSeloTecnico() {
     
     ctx.beginPath(); ctx.moveTo(900, 495); ctx.lineTo(1190, 495); ctx.stroke();
     
-    // 5. LEGENDA DE QUANTIDADES ATUALIZADA
     ctx.font = "bold 12px Arial";
     ctx.fillText("LEGENDA / COMPONENTES:", xSelo, 515);
     
@@ -337,27 +393,34 @@ function desenharSeloTecnico() {
         counts[it.nome].qtd++;
     });
 
-    Object.keys(counts).forEach((nome, i) => {
-        let posY = 540 + (i * 22);
-        if (posY < 780) { // Trava para não estourar a folha para baixo
+    const chavesLegenda = Object.keys(counts);
+    chavesLegenda.forEach((nome, i) => {
+        let linha = Math.floor(i / 2); 
+        let coluna = i % 2; 
+        
+        let posX_caixa = 915 + (coluna * 135);
+        let posY = 540 + (linha * 22);
+        
+        if (posY < 785) { 
             if (counts[nome].usaImg) {
-                ctx.fillStyle = "#ff9800"; // Laranja para ícones/imagens externos
+                ctx.fillStyle = "#ff9800"; 
             } else {
                 ctx.fillStyle = counts[nome].cor || "#777";
             }
-            ctx.fillRect(915, posY - 10, 12, 12);
+            ctx.fillRect(posX_caixa, posY - 10, 12, 12);
             ctx.strokeStyle = "#333";
-            ctx.strokeRect(915, posY - 10, 12, 12);
+            ctx.strokeRect(posX_caixa, posY - 10, 12, 12);
+            
             ctx.fillStyle = "#000";
-            ctx.font = "11px Arial";
-            ctx.fillText(`${nome}: ${counts[nome].qtd} un.`, 935, posY);
+            ctx.font = "10px Arial";
+            ctx.fillText(`${nome}: ${counts[nome].qtd}`, posX_caixa + 18, posY);
         }
     });
     
     ctx.restore();
 }
 
-// --- CONFIGURAÇÃO DE EVENTOS DE MOUSE E TECLADO ---
+// --- CONFIGURAÇÃO DE EVENTOS DE MOUSE E TECLADO INTEGRAIS ---
 canvas.onmousedown = (e) => {
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left) / zoom;
