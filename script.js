@@ -18,7 +18,6 @@ let areaFim = { x: 0, y: 0 };
 
 // --- 1. CARREGAMENTO DE ASSETS ---
 const imagens = {
-    logo: new Image(),
     "carro01": new Image(),
     "escada01": new Image(),
     "escada02": new Image(),
@@ -43,7 +42,6 @@ const imagens = {
 };
 
 // Caminhos dos arquivos
-imagens.logo.src = 'assets/img/1574799294920.png';
 imagens["carro01"].src = 'assets/img/carro01.png';
 imagens["escada01"].src = 'assets/img/escada01.png';
 imagens["escada02"].src = 'assets/img/escada02.png';
@@ -153,14 +151,6 @@ function desenhar() {
     const andarVisivel = document.getElementById('sel_andar_view').value;
     ctx.setTransform(1, 0, 0, 1, 0, 0); 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (imagens.logo.complete) {
-        ctx.save();
-        ctx.globalAlpha = 0.04;
-        const tamLogo = 500;
-        ctx.drawImage(imagens.logo, (900 - tamLogo) / 2, (800 - tamLogo) / 2, tamLogo, tamLogo);
-        ctx.restore();
-    }
 
     desenharSeloTecnico();
     desenharEscalaTerreno();
@@ -331,10 +321,6 @@ function desenharSeloTecnico() {
 
     let xSelo = 910;
     
-    if (imagens.logo.complete) {
-        ctx.drawImage(imagens.logo, 990, 20, 100, 100);
-    }
-    
     ctx.fillStyle = "#000";
     ctx.textAlign = "center";
     ctx.font = "bold 15px Arial";
@@ -485,6 +471,3 @@ window.addEventListener('keydown', function(e) {
     if (k === 'arrowleft') itensSelecionados.forEach(it => it.w = Math.max(0.1, Number((it.w - 0.1).toFixed(1))));
     desenhar();
 }, true);
-
-function limparTudo() { itens = []; estoque = []; atualizarListaEstoque(); desenhar(); }
-desenhar();
